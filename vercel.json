@@ -1,0 +1,4 @@
+{
+  "installCommand": "npm ci",
+  "buildCommand": "npx tsc && npx vite build"
+}
