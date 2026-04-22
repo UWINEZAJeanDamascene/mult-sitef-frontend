@@ -29,6 +29,10 @@ import {
   MaterialsCatalog,
   UsersManagement,
   ActionLogs,
+  PurchaseOrders,
+  PurchaseOrderForm,
+  PurchaseOrderDetails,
+  PurchaseOrderReports,
 } from '@/pages/main-manager'
 
 // Role-based dashboard redirect
@@ -201,6 +205,46 @@ function App() {
               element={
                 <ProtectedRoute requiredRole={UserRole.MAIN_MANAGER}>
                   <ActionLogs />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/purchase-orders"
+              element={
+                <ProtectedRoute requiredRole={UserRole.MAIN_MANAGER}>
+                  <PurchaseOrders />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/purchase-orders/new"
+              element={
+                <ProtectedRoute requiredRole={UserRole.MAIN_MANAGER}>
+                  <PurchaseOrderForm />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/purchase-orders/:id"
+              element={
+                <ProtectedRoute requiredRole={UserRole.MAIN_MANAGER}>
+                  <PurchaseOrderDetails />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/purchase-orders/:id/edit"
+              element={
+                <ProtectedRoute requiredRole={UserRole.MAIN_MANAGER}>
+                  <PurchaseOrderForm />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/purchase-orders/reports"
+              element={
+                <ProtectedRoute requiredRole={UserRole.MAIN_MANAGER}>
+                  <PurchaseOrderReports />
                 </ProtectedRoute>
               }
             />

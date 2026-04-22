@@ -11,7 +11,8 @@ import {
   Archive,
   Box,
   Activity,
-  Bell
+  Bell,
+  FileText
 } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import { cn } from '@/lib/utils'
@@ -35,6 +36,7 @@ const mainManagerNavItems = [
   { path: '/dashboard', label: 'Main Dashboard', icon: LayoutDashboard },
   { path: '/sites', label: 'All Sites Overview', icon: Building2 },
   { path: '/main-stock', label: 'Main Stock Records', icon: Box },
+  { path: '/purchase-orders', label: 'Purchase Orders', icon: FileText },
   { path: '/used-materials', label: 'Used Materials View', icon: TrendingDown },
   { path: '/remaining-materials', label: 'Remaining Materials View', icon: TrendingUp },
   { path: '/sites-management', label: 'Sites Management', icon: Building2 },

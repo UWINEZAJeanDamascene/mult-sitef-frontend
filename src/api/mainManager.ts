@@ -7,7 +7,10 @@ import type {
   User, 
   UsedMaterialsView, 
   RemainingMaterialsView,
-  StockMovement 
+  StockMovement,
+  PurchaseOrder,
+  CreatePODto,
+  ReceiveItemsDto
 } from '@/types'
 
 // Dashboard API
@@ -261,6 +264,164 @@ export const usersManagerApi = {
 
   assignSites: async (id: string, siteIds: string[]): Promise<User> => {
     const { data } = await api.post(`/auth/users/${id}/sites`, { siteIds })
+    return data
+  },
+}
+
+// Purchase Order API
+export const purchaseOrderApi = {
+  getAll: async (params?: {
+    status?: string
+    siteId?: string
+    supplier?: string
+    startDate?: string
+    endDate?: string
+    page?: number
+    limit?: number
+  }): Promise<{
+    records: PurchaseOrder[]
+    total: number
+    page: number
+    totalPages: number
+  }> => {
+    const queryParams = new URLSearchParams()
+    if (params?.status && params.status !== 'all') queryParams.append('status', params.status)
+    if (params?.siteId) queryParams.append('siteId', params.siteId)
+    if (params?.supplier) queryParams.append('supplier', params.supplier)
+    if (params?.startDate) queryParams.append('startDate', params.startDate)
+    if (params?.endDate) queryParams.append('endDate', params.endDate)
+    if (params?.page) queryParams.append('page', params.page.toString())
+    if (params?.limit) queryParams.append('limit', params.limit.toString())
+    
+    const { data } = await api.get(`/purchase-orders?${queryParams.toString()}`)
+    return data
+  },
+
+  getById: async (id: string): Promise<PurchaseOrder> => {
+    const { data } = await api.get(`/purchase-orders/${id}`)
+    return data
+  },
+
+  create: async (poData: CreatePODto): Promise<PurchaseOrder> => {
+    const { data } = await api.post('/purchase-orders', poData)
+    return data
+  },
+
+  update: async (id: string, poData: Partial<CreatePODto>): Promise<PurchaseOrder> => {
+    const { data } = await api.put(`/purchase-orders/${id}`, poData)
+    return data
+  },
+
+  delete: async (id: string): Promise<void> => {
+    await api.delete(`/purchase-orders/${id}`)
+  },
+
+  send: async (id: string): Promise<PurchaseOrder> => {
+    const { data } = await api.patch(`/purchase-orders/${id}/send`)
+    return data
+  },
+
+  receiveItems: async (id: string, receiveData: ReceiveItemsDto): Promise<PurchaseOrder> => {
+    const { data } = await api.patch(`/purchase-orders/${id}/receive`, receiveData)
+    return data
+  },
+
+  complete: async (id: string): Promise<PurchaseOrder> => {
+    const { data } = await api.patch(`/purchase-orders/${id}/complete`)
+    return data
+  },
+
+  cancel: async (id: string): Promise<PurchaseOrder> => {
+    const { data } = await api.patch(`/purchase-orders/${id}/cancel`)
+    return data
+  },
+
+  duplicate: async (id: string): Promise<PurchaseOrder> => {
+    const { data } = await api.post(`/purchase-orders/${id}/duplicate`)
+    return data
+  },
+
+  exportToExcel: async (params?: {
+    status?: string
+    startDate?: string
+    endDate?: string
+  }): Promise<Blob> => {
+    const queryParams = new URLSearchParams()
+    if (params?.status && params.status !== 'all') queryParams.append('status', params.status)
+    if (params?.startDate) queryParams.append('startDate', params.startDate)
+    if (params?.endDate) queryParams.append('endDate', params.endDate)
+    
+    const { data } = await api.get(`/purchase-orders/export/excel?${queryParams.toString()}`, {
+      responseType: 'blob',
+    })
+    return data
+  },
+
+  exportToPDF: async (id: string): Promise<Blob> => {
+    const { data } = await api.get(`/purchase-orders/${id}/pdf`, {
+      responseType: 'blob',
+    })
+    return data
+  },
+
+  getStats: async (): Promise<{
+    total: number
+    byStatus: Record<string, { count: number; value: number }>
+    totalValue: number
+    pendingValue: number
+  }> => {
+    const { data } = await api.get('/purchase-orders/stats/overview')
+    return data
+  },
+
+  getAgingReport: async (): Promise<{
+    overdue: Array<{
+      id: string
+      poNumber: string
+      supplier: any
+      site: string
+      expectedDeliveryDate: string
+      daysOverdue: number
+    }>
+    approaching: Array<{
+      id: string
+      poNumber: string
+      supplier: any
+      site: string
+      expectedDeliveryDate: string
+      daysRemaining: number
+    }>
+  }> => {
+    const { data } = await api.get('/purchase-orders/reports/aging')
+    return data
+  },
+
+  getSupplierReport: async (): Promise<Array<{
+    supplierName: string
+    totalPOs: number
+    totalValue: number
+    completedPOs: number
+    cancelledPOs: number
+    completionRate: string
+    avgDeliveryDays: string | null
+  }>> => {
+    const { data } = await api.get('/purchase-orders/reports/suppliers')
+    return data
+  },
+
+  getPendingReport: async (): Promise<Array<{
+    id: string
+    poNumber: string
+    supplier: any
+    site: string
+    status: string
+    totalAmount: number
+    itemsPending: number
+    totalItems: number
+    sentDate: string
+    expectedDeliveryDate: string
+  }>> => {
+    const { data } = await api.get('/purchase-orders/reports/pending')
     return data
   },
 }

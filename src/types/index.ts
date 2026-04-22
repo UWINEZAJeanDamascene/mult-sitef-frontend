@@ -179,3 +179,72 @@ export {
   type ActionLogStats,
   type ActionLogsFilter,
 } from './actionLog'
+
+// Purchase Order Types
+export interface POItem {
+  _id?: string;
+  materialName: string;
+  material_id?: string;
+  description?: string;
+  quantityOrdered: number;
+  quantityReceived: number;
+  unitPrice: number;
+  totalPrice: number;
+  unit: string;
+  notes?: string;
+}
+
+export interface PurchaseOrder {
+  id: string;
+  poNumber: string;
+  supplier: {
+    name: string;
+    contactPerson?: string;
+    email?: string;
+    phone?: string;
+    address?: string;
+  };
+  site: {
+    _id: string;
+    name: string;
+    location?: string;
+  };
+  status: 'draft' | 'sent' | 'partial' | 'received' | 'completed' | 'cancelled';
+  items: POItem[];
+  subTotal: number;
+  taxRate: number;
+  taxAmount: number;
+  totalAmount: number;
+  notes?: string;
+  terms?: string;
+  sentDate?: string;
+  expectedDeliveryDate?: string;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreatePODto {
+  supplier: {
+    name: string;
+    contactPerson?: string;
+    email?: string;
+    phone?: string;
+    address?: string;
+  };
+  site_id: string;
+  items: Omit<POItem, '_id' | 'quantityReceived' | 'totalPrice'>[];
+  taxRate?: number;
+  notes?: string;
+  terms?: string;
+  expectedDeliveryDate?: string;
+}
+
+export interface ReceiveItemsDto {
+  receivedItems: {
+    itemId: string;
+    quantity: number;
+  }[];
+  date?: string;
+  notes?: string;
+}
