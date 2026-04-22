@@ -1,4 +1,7 @@
 {
   "installCommand": "npm ci",
-  "buildCommand": "npx tsc && npx vite build"
+  "buildCommand": "npx tsc && npx vite build",
+  "env": {
+    "VITE_API_URL": "https://mult-site-backend.onrender.com"
+  }
 }

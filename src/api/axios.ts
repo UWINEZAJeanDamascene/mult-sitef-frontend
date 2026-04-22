@@ -2,10 +2,12 @@ import axios from 'axios'
 import { jwtDecode } from 'jwt-decode'
 import type { JwtPayload } from '@/types'
 
+const API_URL = import.meta.env.VITE_API_URL || '/api'
+
 // Note: authentication is cookie-based (httpOnly cookie set by backend)
 // Axios should send cookies with requests
 export const api = axios.create({
-  baseURL: '/api',
+  baseURL: API_URL,
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
