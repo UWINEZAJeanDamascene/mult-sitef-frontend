@@ -1,0 +1,181 @@
+export enum UserRole {
+  SITE_MANAGER = 'site_manager',
+  MAIN_MANAGER = 'main_manager',
+  ACCOUNTANT = 'accountant',
+  MANAGER = 'manager',
+}
+
+export interface User {
+  id: string;
+  email: string;
+  name: string;
+  role: UserRole;
+  company_id: string;
+  assignedSiteIds?: string[];
+  isActive: boolean;
+  createdAt?: string;
+  // Profile fields
+  profilePicture?: string;
+  phone?: string;
+  department?: string;
+  jobTitle?: string;
+  bio?: string;
+  location?: string;
+  // Company data (populated by backend)
+  company?: {
+    id: string;
+    name: string;
+    logo?: string;
+    address?: string;
+    phone?: string;
+    email?: string;
+    website?: string;
+    taxId?: string;
+    industry?: string;
+    description?: string;
+  };
+}
+
+export interface JwtPayload {
+  userId: string;
+  role: UserRole;
+  company_id: string;
+  assignedSiteIds?: string[];
+  exp: number;
+}
+
+export interface LoginCredentials {
+  email: string;
+  password: string;
+  company_id: string;
+}
+
+export interface AuthResponse {
+  token: string;
+  user: User;
+}
+
+export interface CreateUserData {
+  email: string;
+  password: string;
+  name: string;
+  role: UserRole;
+  company_id: string;
+  assignedSiteIds?: string[];
+}
+
+export interface Site {
+  _id: string;
+  name: string;
+  location?: string;
+  description?: string;
+  company_id: string;
+  createdBy: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Material {
+  _id: string;
+  name: string;
+  unit: string;
+  description?: string;
+  company_id: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SiteRecord {
+  _id: string;
+  site_id: string;
+  material_id?: string;
+  materialName: string;
+  quantityReceived: number;
+  quantityUsed: number;
+  date: string;
+  notes?: string;
+  recordedBy: string;
+  recordedByName?: string;
+  company_id: string;
+  syncedToMainStock: boolean;
+  mainStockEntryId?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface MainStockRecord {
+  _id: string;
+  source: 'site' | 'direct';
+  site_id?: string;
+  siteRecord_id?: string;
+  material_id?: string;
+  materialName: string;
+  quantityReceived: number;
+  quantityUsed: number;
+  price?: number | null;
+  totalValue?: number | null;
+  date: string;
+  status: 'pending_price' | 'priced' | 'direct';
+  notes?: string;
+  recordedBy: string;
+  company_id: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface UsedMaterialsView {
+  materialName: string;
+  material_id?: string;
+  totalQuantityUsed: number;
+  avgPrice: number;
+  totalValue: number;
+  recordCount: number;
+  siteBreakdown: Array<{
+    site_id: string;
+    source: string;
+    quantityUsed: number;
+  }>;
+}
+
+export interface StockMovement {
+  _id: string;
+  mainStock_id: string;
+  type: 'received' | 'used' | 'price_update';
+  quantity?: number;
+  previousPrice?: number;
+  newPrice?: number;
+  previousTotalValue?: number;
+  newTotalValue?: number;
+  date: string;
+  recordedBy: string;
+  notes?: string;
+  createdAt: string;
+}
+
+export interface RemainingMaterialsView {
+  materialName: string;
+  material_id?: string;
+  totalReceived: number;
+  totalUsed: number;
+  remainingQuantity: number;
+  avgPrice: number;
+  remainingValue: number;
+  siteBreakdown: Array<{
+    site_id: string;
+    source: string;
+    received: number;
+    used: number;
+    remaining: number;
+  }>;
+}
+
+// Re-export action log types
+export {
+  ActionType,
+  ResourceType,
+  type ActionLog,
+  type ActionLogStats,
+  type ActionLogsFilter,
+} from './actionLog'
