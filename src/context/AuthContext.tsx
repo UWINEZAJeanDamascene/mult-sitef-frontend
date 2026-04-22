@@ -38,6 +38,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return true
   }, [])
 
+  // Restore company from localStorage (optimistic UI on refresh)
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('company')
+      if (stored) {
+        setCompany(JSON.parse(stored))
+      }
+    } catch (err) {
+      // ignore parse errors
+    }
+  }, [])
+
   // Check auth on mount and when checkAuth changes
   useEffect(() => {
     const initAuth = async () => {
@@ -51,11 +63,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
         setUser(mappedUser)
         console.debug('[AuthContext] Setting company:', userData.company)
-        if (userData.company) setCompany(userData.company)
+        if (userData.company) {
+          setCompany(userData.company)
+          try {
+            localStorage.setItem('company', JSON.stringify(userData.company))
+          } catch (err) {
+            // ignore storage errors
+          }
+        } else {
+          setCompany(null)
+          try {
+            localStorage.removeItem('company')
+          } catch (err) {
+            // ignore
+          }
+        }
       } catch (err) {
         // Not authenticated
         setUser(null)
         setCompany(null)
+        try {
+          localStorage.removeItem('company')
+        } catch (err) {
+          // ignore
+        }
       } finally {
         setIsLoading(false)
       }
@@ -70,7 +101,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Perform login; backend sets httpOnly cookie on success
       const userData = await authApi.login(credentials)
       setUser(userData.user)
-      if (userData.user.company) setCompany(userData.user.company)
+      if (userData.user.company) {
+        setCompany(userData.user.company)
+        try {
+          localStorage.setItem('company', JSON.stringify(userData.user.company))
+        } catch (err) {
+          // ignore storage errors
+        }
+      }
     } catch (error) {
       throw error
     } finally {
@@ -88,6 +126,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     setUser(null)
     setCompany(null)
+    try {
+      localStorage.removeItem('company')
+    } catch (err) {
+      // ignore
+    }
     navigate('/', { replace: true })
   }, [navigate])
 
@@ -100,6 +143,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setCompany((prev) => {
       const merged = prev ? { ...prev, ...updates } : updates
       console.debug('[AuthContext] updateCompany setState:', { prev, merged })
+      try {
+        localStorage.setItem('company', JSON.stringify(merged))
+      } catch (err) {
+        // ignore
+      }
       return merged
     })
   }, [])
