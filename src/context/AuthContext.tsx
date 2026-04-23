@@ -115,9 +115,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       // Perform login; backend sets httpOnly cookie on success and returns token
       const response = await authApi.login(credentials)
-      setUser(response.user)
-      // Store token for Bearer authentication (needed for mobile where cookies may be blocked)
-      localStorage.setItem('auth_token', response.token)
+      // If backend returned user object, use it
+      if (response.user) setUser(response.user)
+
+      // Only store token when present (avoid storing string 'undefined')
+      if (response.token) {
+        localStorage.setItem('auth_token', response.token)
+      } else {
+        // If no token returned, attempt to hydrate user via cookie-based session
+        try {
+          const me = await authApi.getMe()
+          if (me) setUser(me)
+        } catch (err) {
+          // Ignore - login may have relied on cookie which isn't available
+        }
+      }
       setIsAuthenticated(true)
       // Clear logout flag on successful login
       sessionStorage.removeItem('logged_out')
