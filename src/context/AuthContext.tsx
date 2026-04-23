@@ -30,6 +30,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [company, setCompany] = useState<Company | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
   const navigate = useNavigate()
 
   const checkAuth = useCallback((): boolean => {
@@ -53,6 +54,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Check auth on mount and when checkAuth changes
   useEffect(() => {
     const initAuth = async () => {
+      // Check if user manually logged out - prevents auto-login on refresh
+      const loggedOut = sessionStorage.getItem('logged_out')
+      if (loggedOut) {
+        sessionStorage.removeItem('logged_out')
+        setUser(null)
+        setCompany(null)
+        setIsAuthenticated(false)
+        setIsLoading(false)
+        return
+      }
+
       try {
         const userData = await authApi.getMe()
         console.debug('[AuthContext] getMe response:', userData)
@@ -62,6 +74,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           assignedSiteIds: (userData as any).assignedSites?.map((s: any) => s.id || s) || [],
         }
         setUser(mappedUser)
+        setIsAuthenticated(true)
         console.debug('[AuthContext] Setting company:', userData.company)
         if (userData.company) {
           setCompany(userData.company)
@@ -82,6 +95,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Not authenticated
         setUser(null)
         setCompany(null)
+        setIsAuthenticated(false)
         try {
           localStorage.removeItem('company')
         } catch (err) {
@@ -101,6 +115,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Perform login; backend sets httpOnly cookie on success
       const userData = await authApi.login(credentials)
       setUser(userData.user)
+      setIsAuthenticated(true)
+      // Clear logout flag on successful login
+      sessionStorage.removeItem('logged_out')
       if (userData.user.company) {
         setCompany(userData.user.company)
         try {
@@ -116,22 +133,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
-  const logout = useCallback(() => {
-    // Clear cookie on server and local state
+  const logout = useCallback(async () => {
     try {
-      // fire-and-forget - backend will clear cookie
-      fetch('/api/auth/logout', { method: 'POST', credentials: 'include' })
-    } catch (err) {
-      // ignore
+      // Wait for logout to complete to ensure cookie is cleared
+      await fetch('/api/auth/logout', {
+        method: 'POST',
+        credentials: 'include',
+      })
+    } catch {
+      // Ignore errors - we'll clear local state anyway
     }
+
+    // Mark that user manually logged out - prevents auto-login on refresh
+    sessionStorage.setItem('logged_out', 'true')
+
+    // Clear all auth-related storage
     setUser(null)
     setCompany(null)
-    try {
-      localStorage.removeItem('company')
-    } catch (err) {
-      // ignore
-    }
-    navigate('/', { replace: true })
+    localStorage.removeItem('company')
+    localStorage.removeItem('auth_user')
+    localStorage.removeItem('auth_token')
+    sessionStorage.removeItem('auth_user')
+    setIsAuthenticated(false)
+    navigate('/')
   }, [navigate])
 
   const updateUser = useCallback((updates: Partial<User>) => {
@@ -187,7 +211,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     user,
     company,
     isLoading,
-    isAuthenticated: !!user,
+    isAuthenticated,
     login,
     logout,
     checkAuth,

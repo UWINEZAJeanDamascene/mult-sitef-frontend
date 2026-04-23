@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Plus, Search, Users, Power, PowerOff, Loader2, UserPlus, Building2 } from 'lucide-react'
+import { Plus, Search, Users, Power, PowerOff, Loader2, UserPlus, Building2, Pencil, Lock } from 'lucide-react'
 import { toast } from 'react-hot-toast'
 import { usersManagerApi, sitesManagerApi } from '@/api/mainManager'
 import { DataTable, Column } from '@/components/DataTable'
@@ -291,9 +291,220 @@ function AssignSitesModal({
   )
 }
 
+// Edit User Modal
+function EditUserModal({
+  isOpen,
+  onClose,
+  user,
+}: {
+  isOpen: boolean
+  onClose: () => void
+  user: UserWithSites | null
+}) {
+  const queryClient = useQueryClient()
+  const [showPassword, setShowPassword] = useState(false)
+
+  const { data: sites } = useQuery({
+    queryKey: ['sites'],
+    queryFn: sitesManagerApi.getAllSites,
+    enabled: isOpen,
+  })
+
+  const {
+    register,
+    handleSubmit,
+    watch,
+    setValue,
+    formState: { errors },
+    reset,
+  } = useForm({
+    defaultValues: {
+      name: user?.name || '',
+      email: user?.email || '',
+      role: user?.role || 'site_manager',
+      assignedSiteIds: user?.assignedSites?.map((s: any) => s._id || s.id) || [],
+      isActive: user?.isActive ?? true,
+      password: '',
+    },
+  })
+
+  // Reset form when user changes
+  useMemo(() => {
+    if (user) {
+      reset({
+        name: user.name || '',
+        email: user.email || '',
+        role: user.role || 'site_manager',
+        assignedSiteIds: user.assignedSites?.map((s: any) => s._id || s.id) || [],
+        isActive: user.isActive ?? true,
+        password: '',
+      })
+    }
+  }, [user, reset])
+
+  const selectedRole = watch('role')
+  const selectedSites = watch('assignedSiteIds') || []
+
+  const updateMutation = useMutation({
+    mutationFn: (data: any) => {
+      if (!user) throw new Error('No user selected')
+      // Remove password if empty
+      const payload = { ...data }
+      if (!payload.password) delete payload.password
+      return usersManagerApi.updateUser(user.id, payload)
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users'] })
+      toast.success('User updated successfully')
+      onClose()
+    },
+    onError: (error: any) => {
+      toast.error(error?.response?.data?.error || 'Failed to update user')
+    },
+  })
+
+  if (!user) return null
+
+  return (
+    <ModalWrapper isOpen={isOpen} onClose={onClose} title="Edit User">
+      <form onSubmit={handleSubmit((data) => updateMutation.mutate(data))}>
+        <div className="space-y-4 py-4">
+          {/* Name */}
+          <InputField
+            label="Full Name"
+            {...register('name', { required: 'Name is required' })}
+            error={errors.name?.message}
+          />
+
+          {/* Email */}
+          <InputField
+            label="Email Address"
+            type="email"
+            {...register('email', { required: 'Email is required' })}
+            error={errors.email?.message}
+          />
+
+          {/* Role */}
+          <SelectField
+            label="Role"
+            {...register('role')}
+            error={errors.role?.message}
+            options={[
+              { value: 'site_manager', label: 'Site Manager' },
+              { value: 'main_manager', label: 'Main Manager' },
+            ]}
+          />
+
+          {/* Assigned Sites (only for site managers) */}
+          {selectedRole === 'site_manager' && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Assigned Sites
+              </label>
+              <div className="border border-gray-300 rounded-lg p-3 max-h-40 overflow-y-auto space-y-2">
+                {!sites || sites.length === 0 ? (
+                  <p className="text-sm text-gray-500">No sites available</p>
+                ) : (
+                  sites.map((site: any) => (
+                    <label
+                      key={site._id}
+                      className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded cursor-pointer"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selectedSites.includes(site._id)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setValue('assignedSiteIds', [...selectedSites, site._id])
+                          } else {
+                            setValue(
+                              'assignedSiteIds',
+                              selectedSites.filter((id) => id !== site._id)
+                            )
+                          }
+                        }}
+                        className="w-4 h-4 text-indigo-600 rounded"
+                      />
+                      <span className="text-sm">{site.name}</span>
+                    </label>
+                  ))
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Status */}
+          <div className="flex items-center gap-3">
+            <input
+              type="checkbox"
+              id="isActive"
+              {...register('isActive')}
+              className="w-4 h-4 text-indigo-600 rounded"
+            />
+            <label htmlFor="isActive" className="text-sm font-medium text-gray-700">
+              Active User
+            </label>
+          </div>
+
+          {/* Password (optional) */}
+          <div className="border-t border-gray-200 pt-4 mt-4">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-sm font-medium text-gray-700">Reset Password</span>
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="text-sm text-indigo-600 hover:text-indigo-700"
+              >
+                {showPassword ? 'Cancel' : 'Change'}
+              </button>
+            </div>
+            {showPassword && (
+              <InputField
+                label="New Password"
+                type="password"
+                placeholder="Enter new password"
+                {...register('password', {
+                  minLength: showPassword
+                    ? { value: 6, message: 'Password must be at least 6 characters' }
+                    : undefined,
+                })}
+                error={errors.password?.message}
+              />
+            )}
+          </div>
+        </div>
+
+        {/* Buttons */}
+        <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg font-medium"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            disabled={updateMutation.isPending}
+            className="px-4 py-2 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 disabled:opacity-50 flex items-center gap-2"
+          >
+            {updateMutation.isPending ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Pencil className="w-4 h-4" />
+            )}
+            Save Changes
+          </button>
+        </div>
+      </form>
+    </ModalWrapper>
+  )
+}
+
 export function UsersManagement() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [assigningUser, setAssigningUser] = useState<UserWithSites | null>(null)
+  const [editingUser, setEditingUser] = useState<UserWithSites | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const queryClient = useQueryClient()
 
@@ -392,6 +603,13 @@ export function UsersManagement() {
       header: 'Actions',
       render: (user) => (
         <div className="flex items-center gap-1">
+          <button
+            onClick={() => setEditingUser(user)}
+            className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg"
+            title="Edit user"
+          >
+            <Pencil className="w-4 h-4" />
+          </button>
           {user.role === 'site_manager' && (
             <button
               onClick={() => setAssigningUser(user)}
@@ -528,6 +746,11 @@ export function UsersManagement() {
         isOpen={!!assigningUser}
         onClose={() => setAssigningUser(null)}
         user={assigningUser}
+      />
+      <EditUserModal
+        isOpen={!!editingUser}
+        onClose={() => setEditingUser(null)}
+        user={editingUser}
       />
     </div>
   )

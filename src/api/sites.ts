@@ -83,6 +83,43 @@ export const siteRecordsApi = {
     const { data } = await api.get('/site-records/dashboard-stats')
     return data
   },
+
+  // Get site inventory (materials available from PO receipts)
+  getSiteInventory: async (): Promise<{
+    inventory: Array<{
+      materialName: string
+      siteId: string
+      siteName: string
+      totalReceived: number
+      totalUsed: number
+      remainingQuantity: number
+      lastReceivedDate: string
+    }>
+  }> => {
+    const { data } = await api.get('/site-records/inventory/my')
+    return data
+  },
+
+  // Record usage against available materials
+  recordUsage: async (usageData: {
+    siteId: string
+    materialName: string
+    quantityUsed: number
+    date: string
+    notes?: string
+  }): Promise<{
+    id: string
+    site_id: string
+    materialName: string
+    quantityUsed: number
+    date: string
+    notes: string
+    availableQuantity: number
+    createdAt: string
+  }> => {
+    const { data } = await api.post('/site-records/usage', usageData)
+    return data
+  },
 }
 
 export const materialsApi = {

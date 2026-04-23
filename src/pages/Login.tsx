@@ -183,18 +183,6 @@ export function Login() {
             </button>
           </form>
 
-          {/* Demo Credentials */}
-          <div className="mt-6 p-4 rounded-lg bg-muted border border-border">
-            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">
-              Demo Credentials
-            </p>
-            <div className="text-sm text-foreground space-y-1">
-              <p><span className="font-medium">Name:</span> Main Manager</p>
-              <p><span className="font-medium">Email:</span> admin@lilstock.com</p>
-              <p><span className="font-medium">Password:</span> admin123</p>
-              <p><span className="font-medium">Company:</span> default-company</p>
-            </div>
-          </div>
         </div>
 
         {/* Footer */}

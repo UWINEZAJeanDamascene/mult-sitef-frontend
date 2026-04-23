@@ -16,6 +16,7 @@ import { SiteManagerDashboard } from '@/pages/site-manager/Dashboard'
 import { RecordMaterial } from '@/pages/site-manager/RecordMaterial'
 import { ReceivedMaterials } from '@/pages/site-manager/ReceivedMaterials'
 import { UsedMaterials } from '@/pages/site-manager/UsedMaterials'
+import { SiteInventory } from '@/pages/site-manager/SiteInventory'
 
 // Main Manager Pages
 import {
@@ -87,6 +88,14 @@ function App() {
               element={
                 <ProtectedRoute requiredRole={UserRole.SITE_MANAGER}>
                   <ReceivedMaterials />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/inventory"
+              element={
+                <ProtectedRoute requiredRole={UserRole.SITE_MANAGER}>
+                  <SiteInventory />
                 </ProtectedRoute>
               }
             />

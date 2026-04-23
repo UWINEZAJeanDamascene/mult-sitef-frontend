@@ -591,17 +591,6 @@ export default function LandingPage() {
               </button>
             </form>
 
-            {/* Demo credentials hint */}
-            <div className="mt-6 p-4 bg-slate-50 dark:bg-slate-800 rounded-lg">
-              <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
-                Demo Credentials
-              </p>
-              <p className="text-sm text-slate-600 dark:text-slate-300">
-                <strong>Email:</strong> admin@lilstock.com<br />
-                <strong>Password:</strong> admin123<br />
-                <strong>Company:</strong> CTS
-              </p>
-            </div>
           </div>
         </div>
       )}

@@ -12,7 +12,8 @@ import {
   Box,
   Activity,
   Bell,
-  FileText
+  FileText,
+  Warehouse
 } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import { cn } from '@/lib/utils'
@@ -26,6 +27,7 @@ interface SidebarProps {
 
 const siteManagerNavItems = [
   { path: '/dashboard', label: 'My Site Dashboard', icon: LayoutDashboard },
+  { path: '/inventory', label: 'Site Inventory', icon: Warehouse },
   { path: '/received', label: 'Received Materials', icon: Package },
   { path: '/used', label: 'Used Materials', icon: TrendingDown },
   { path: '/record', label: 'Record Material', icon: Archive },

@@ -12,6 +12,7 @@ export const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  timeout: 10000, // 10s timeout to avoid hanging requests during dev when backend is unreachable
 })
 
 export const isTokenValid = (token: string | null): boolean => {
