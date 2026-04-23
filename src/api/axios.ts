@@ -42,6 +42,17 @@ export const getTokenPayload = (token: string | null): JwtPayload | null => {
 api.interceptors.response.use(
   (response) => response,
   (error) => {
+    // Log CORS and network errors for debugging
+    if (error.code === 'ERR_NETWORK' || error.message?.includes('CORS')) {
+      console.error('Network/CORS Error:', {
+        message: error.message,
+        code: error.code,
+        url: error.config?.url,
+        method: error.config?.method,
+        baseURL: error.config?.baseURL
+      });
+    }
+
     // 401 errors are handled by AuthContext and ProtectedRoute components
     // Don't auto-redirect here to allow landing page to work for guests
     return Promise.reject(error)
