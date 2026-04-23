@@ -35,8 +35,14 @@ export const getTokenPayload = (token: string | null): JwtPayload | null => {
   }
 }
 
-// Request interceptor - attach token
-// No request interceptor needed — auth handled with httpOnly cookie
+// Request interceptor - attach token for APIs that require it
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('auth_token')
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`
+  }
+  return config
+})
 
 // Response interceptor - let components handle 401s
 api.interceptors.response.use(
