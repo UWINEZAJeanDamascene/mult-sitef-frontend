@@ -9,7 +9,7 @@ import CompanyProfile from '@/pages/CompanyProfile'
 import { Notifications } from '@/pages/Notifications'
 import LandingPage from '@/pages/LandingPage'
 import { useAuth } from '@/context/AuthContext'
-import { UserRole } from '@/types'
+import { UserRole } from '@/types' 
 
 // Site Manager Pages
 import { SiteManagerDashboard } from '@/pages/site-manager/Dashboard'
