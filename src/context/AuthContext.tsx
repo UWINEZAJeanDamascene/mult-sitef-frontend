@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { authApi } from '@/api/auth'
+import { api } from '@/api/axios'
 import type { Company } from '@/api/companies'
 import type { User, LoginCredentials } from '@/types'
 import { UserRole } from '@/types'
@@ -112,16 +113,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = useCallback(async (credentials: LoginCredentials) => {
     setIsLoading(true)
     try {
-      // Perform login; backend sets httpOnly cookie on success
-      const userData = await authApi.login(credentials)
-      setUser(userData.user)
+      // Perform login; backend sets httpOnly cookie on success and returns token
+      const response = await authApi.login(credentials)
+      setUser(response.user)
+      // Store token for Bearer authentication (needed for mobile where cookies may be blocked)
+      localStorage.setItem('auth_token', response.token)
       setIsAuthenticated(true)
       // Clear logout flag on successful login
       sessionStorage.removeItem('logged_out')
-      if (userData.user.company) {
-        setCompany(userData.user.company)
+      if (response.user.company) {
+        setCompany(response.user.company)
         try {
-          localStorage.setItem('company', JSON.stringify(userData.user.company))
+          localStorage.setItem('company', JSON.stringify(response.user.company))
         } catch (err) {
           // ignore storage errors
         }
@@ -135,10 +138,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = useCallback(async () => {
     try {
-      // Wait for logout to complete to ensure cookie is cleared
-      await fetch('/api/auth/logout', {
-        method: 'POST',
-        credentials: 'include',
+      // Use axios to include Authorization header (works for mobile where cookies may be blocked)
+      await api.post('/auth/logout', {}, {
+        // Don't fail if request fails - still clear local state
+        validateStatus: () => true
       })
     } catch {
       // Ignore errors - we'll clear local state anyway
