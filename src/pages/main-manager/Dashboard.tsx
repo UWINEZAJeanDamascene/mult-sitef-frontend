@@ -40,7 +40,7 @@ function StatCard({
   loading?: boolean
 }) {
   return (
-    <div className="bg-card rounded-xl border border-border p-6 shadow-sm">
+    <div className="bg-card rounded-xl border border-border p-4 md:p-6 shadow-sm">
       <div className="flex items-start justify-between">
         <div>
           <p className="text-sm font-medium text-muted-foreground">{title}</p>
@@ -127,29 +127,30 @@ export function MainManagerDashboard() {
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Top Materials Bar Chart */}
-        <div className="bg-card rounded-xl border border-border p-6 shadow-sm">
-          <div className="flex items-center gap-2 mb-6">
+        <div className="bg-card rounded-xl border border-border p-4 md:p-6 shadow-sm">
+          <div className="flex items-center gap-2 mb-4 md:mb-6">
             <Package className="w-5 h-5 text-muted-foreground" />
-            <h2 className="text-lg font-semibold text-foreground">
+            <h2 className="text-base md:text-lg font-semibold text-foreground">
               Top 10 Materials by Quantity Received
             </h2>
           </div>
           
           {materialsLoading ? (
-            <div className="h-64 flex items-center justify-center">
+            <div className="h-48 md:h-64 flex items-center justify-center">
               <Loader2 className="w-8 h-8 animate-spin text-primary" />
             </div>
           ) : topMaterials && topMaterials.length > 0 ? (
-            <div className="h-64">
+            <div className="h-48 md:h-64">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={topMaterials} layout="vertical">
+                <BarChart data={topMaterials} layout="vertical" margin={{ left: 10, right: 10, top: 5, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" horizontal={false} />
-                  <XAxis type="number" />
+                  <XAxis type="number" tick={{ fontSize: 10 }} />
                   <YAxis 
                     dataKey="materialName" 
                     type="category" 
-                    width={100}
-                    tick={{ fontSize: 12 }}
+                    width={80}
+                    tick={{ fontSize: 10 }}
+                    interval={0}
                   />
                   <Tooltip 
                     formatter={(value: number) => format.number(value, 2)}
@@ -177,29 +178,32 @@ export function MainManagerDashboard() {
         </div>
 
         {/* Stock Movements Line Chart */}
-        <div className="bg-card rounded-xl border border-border p-6 shadow-sm">
-          <div className="flex items-center gap-2 mb-6">
+        <div className="bg-card rounded-xl border border-border p-4 md:p-6 shadow-sm">
+          <div className="flex items-center gap-2 mb-4 md:mb-6">
             <TrendingUp className="w-5 h-5 text-muted-foreground" />
-            <h2 className="text-lg font-semibold text-foreground">
+            <h2 className="text-base md:text-lg font-semibold text-foreground">
               Stock Movements (Last 30 Days)
             </h2>
           </div>
           
           {movementsLoading ? (
-            <div className="h-64 flex items-center justify-center">
+            <div className="h-48 md:h-64 flex items-center justify-center">
               <Loader2 className="w-8 h-8 animate-spin text-primary" />
             </div>
           ) : movements && movements.length > 0 ? (
-            <div className="h-64">
+            <div className="h-48 md:h-64">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={movements}>
+                <LineChart data={movements} margin={{ left: 0, right: 10, top: 5, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis 
                     dataKey="date" 
                     tickFormatter={(date) => format.date(date)}
-                    tick={{ fontSize: 12 }}
+                    tick={{ fontSize: 10 }}
+                    angle={-45}
+                    textAnchor="end"
+                    height={50}
                   />
-                  <YAxis />
+                  <YAxis tick={{ fontSize: 10 }} />
                   <Tooltip 
                     formatter={(value: number) => format.number(value, 2)}
                     labelFormatter={(label) => format.date(label)}

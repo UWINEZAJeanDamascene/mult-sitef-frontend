@@ -184,7 +184,7 @@ export default function CompanyProfile() {
           </CardHeader>
           <CardContent className="flex flex-col items-center">
             <div className="relative">
-              <div className="w-32 h-32 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden mb-4">
+              <div className="w-32 h-32 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden mb-4 relative">
                 {company?.logo ? (
                   <img
                     src={company.logo || ''}
@@ -196,17 +196,17 @@ export default function CompanyProfile() {
                 )}
               </div>
               {canEdit && isEditing && (
-                <label className="absolute bottom-0 right-0 w-10 h-10 bg-primary text-primary-foreground rounded-full flex items-center justify-center cursor-pointer hover:bg-primary/90 transition-colors shadow-lg relative">
+                <label className="absolute -bottom-2 -right-2 w-10 h-10 bg-primary text-primary-foreground rounded-full flex items-center justify-center cursor-pointer hover:bg-primary/90 transition-colors shadow-lg z-10">
                     <Camera className="w-5 h-5" onClick={openFileDialog} />
                     <input
                       ref={fileInputRef}
-type="file"
-                    accept="image/*"
-                    aria-label="Upload company logo"
-                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                    onChange={handleImageUpload}
-                    disabled={uploadLogoMutation.isPending}
-                  />
+                      type="file"
+                      accept="image/*"
+                      aria-label="Upload company logo"
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                      onChange={handleImageUpload}
+                      disabled={uploadLogoMutation.isPending}
+                    />
                 </label>
               )}
             </div>

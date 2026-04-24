@@ -83,7 +83,9 @@ export function TopBar({ onMenuClick, sidebarCollapsed }: TopBarProps) {
     <header className={cn(
       'fixed top-0 right-0 z-30 h-16 bg-background border-b border-border',
       'flex items-center justify-between px-4 transition-all duration-300',
-      sidebarCollapsed ? 'left-16' : 'left-64'
+      // Full width on mobile, sidebar-based margin on lg+
+      'left-0 lg:left-16',
+      sidebarCollapsed ? 'lg:left-16' : 'lg:left-64'
     )}>
       {/* Left side - Mobile menu + Title */}
       <div className="flex items-center gap-4">
@@ -101,11 +103,11 @@ export function TopBar({ onMenuClick, sidebarCollapsed }: TopBarProps) {
       </div>
 
       {/* Right side - Notifications + Theme Toggle + User */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-1 sm:gap-3">
         {/* Notifications */}
         <button 
           onClick={handleNotificationsClick}
-          className="relative p-2 rounded-lg hover:bg-muted text-foreground"
+          className="relative p-1.5 sm:p-2 rounded-lg hover:bg-muted text-foreground"
         >
           <Bell className="w-5 h-5" />
           {unreadCount > 0 && (
@@ -122,7 +124,7 @@ export function TopBar({ onMenuClick, sidebarCollapsed }: TopBarProps) {
          <div className="relative">
            <button
              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-             className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted transition-colors"
+             className="flex items-center gap-2 sm:gap-3 p-1.5 sm:p-2 rounded-lg hover:bg-muted transition-colors"
            >
              {/* Avatar */}
              {user?.profilePicture ? (
@@ -159,7 +161,7 @@ export function TopBar({ onMenuClick, sidebarCollapsed }: TopBarProps) {
             </div>
 
             <ChevronDown className={cn(
-              'w-4 h-4 text-muted-foreground transition-transform',
+              'hidden sm:block w-4 h-4 text-muted-foreground transition-transform',
               isDropdownOpen && 'rotate-180'
             )} />
           </button>

@@ -34,7 +34,7 @@ export function StatCard({
   className,
 }: StatCardProps) {
   return (
-    <div className={cn('bg-card rounded-xl border border-border p-6 shadow-sm', className)}>
+    <div className={cn('bg-card rounded-xl border border-border p-4 md:p-6 shadow-sm', className)}>
       <div className="flex items-start justify-between">
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium text-muted-foreground">{title}</p>
@@ -72,7 +72,7 @@ export function StatCard({
 
 export function StatCardSkeleton({ className }: { className?: string }) {
   return (
-    <div className={cn('bg-card rounded-xl border border-border p-6 shadow-sm', className)}>
+    <div className={cn('bg-card rounded-xl border border-border p-4 md:p-6 shadow-sm', className)}>
       <div className="flex items-start justify-between">
         <div className="flex-1">
           <div className="h-4 w-20 bg-muted rounded animate-pulse" />
