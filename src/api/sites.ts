@@ -120,6 +120,25 @@ export const siteRecordsApi = {
     const { data } = await api.post('/site-records/usage', usageData)
     return data
   },
+
+  // Create multiple site records (bulk recording)
+  createMultipleSiteRecords: async (records: Array<{
+    site_id: string
+    material_id?: string
+    materialName: string
+    quantityReceived: number
+    quantityUsed: number
+    date: string
+    notes?: string
+  }>): Promise<{ message: string; records: SiteRecord[] }> => {
+    const payload = records.map(({ site_id, material_id, ...rest }) => ({
+      ...rest,
+      siteId: site_id,
+      ...(material_id && { material_id }),
+    }))
+    const { data } = await api.post('/site-records/bulk', payload)
+    return data
+  },
 }
 
 export const materialsApi = {

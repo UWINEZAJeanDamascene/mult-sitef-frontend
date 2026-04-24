@@ -9,122 +9,15 @@ import {
   Calendar,
   FileText,
   Loader2,
-  ChevronDown,
-  Search,
-  Check,
   ArrowLeft,
+  Plus,
+  Trash2,
 } from 'lucide-react'
 import { siteRecordSchema, type SiteRecordFormData } from '@/lib/validations'
-import { siteRecordsApi, materialsApi, sitesApi } from '@/api/sites'
+import { siteRecordsApi, sitesApi } from '@/api/sites'
+import { BulkMaterialInput } from '@/components/BulkMaterialInput'
+import { MaterialSearchDropdown } from '@/components/MaterialSearchDropdown'
 import { cn } from '@/lib/utils'
-
-// Material Search Dropdown Component
-function MaterialSearchDropdown({
-  value,
-  onChange,
-  error,
-}: {
-  value: { id?: string; name: string }
-  onChange: (material: { id?: string; name: string }) => void
-  error?: string
-}) {
-  const [isOpen, setIsOpen] = useState(false)
-  const [searchQuery, setSearchQuery] = useState('')
-
-  const { data: materials, isLoading } = useQuery({
-    queryKey: ['materials-search', searchQuery],
-    queryFn: () =>
-      searchQuery.length >= 2
-        ? materialsApi.searchMaterials(searchQuery)
-        : materialsApi.getMaterials(),
-    staleTime: 60000,
-  })
-
-  const handleSelect = (material: { _id?: string; name: string }) => {
-    onChange({ id: material._id, name: material.name })
-    setIsOpen(false)
-    setSearchQuery('')
-  }
-
-  return (
-    <div className="relative">
-      <div
-        onClick={() => setIsOpen(!isOpen)}
-        className={cn(
-          'w-full px-4 py-2.5 rounded-lg border bg-background cursor-pointer',
-          error ? 'border-destructive' : 'border-input'
-        )}
-      >
-        <span className={value.name ? 'text-foreground' : 'text-muted-foreground'}>
-          {value.name || 'Select or search material...'}
-        </span>
-        <ChevronDown className="w-4 h-4 text-muted-foreground" />
-      </div>
-
-      {isOpen && (
-        <>
-          <div
-            className="fixed inset-0 z-40"
-            onClick={() => setIsOpen(false)}
-          />
-          <div className="absolute z-50 w-full mt-1 bg-background rounded-lg border border-border shadow-lg max-h-60 overflow-auto">
-            <div className="p-2 border-b border-border">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search materials..."
-                  className="w-full pl-9 pr-3 py-2 text-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-                  autoFocus
-                />
-              </div>
-            </div>
-
-            <div className="py-1">
-              {isLoading ? (
-                <div className="p-3 text-center text-muted-foreground">
-                  <Loader2 className="w-4 h-4 animate-spin mx-auto mb-1" />
-                  Loading...
-                </div>
-              ) : materials?.length === 0 ? (
-                <div className="p-3 text-center text-muted-foreground">
-                  No materials found
-                </div>
-              ) : (
-                materials?.map((material) => (
-                  <button
-                    key={material._id}
-                    type="button"
-                    onClick={() => handleSelect(material)}
-                    className={cn(
-                      'w-full px-4 py-2 text-left hover:bg-muted flex items-center justify-between',
-                      value.id === material._id && 'bg-primary/10'
-                    )}
-                  >
-                    <div>
-                      <p className="text-sm font-medium text-foreground">
-                        {material.name}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        Unit: {material.unit}
-                      </p>
-                    </div>
-                    {value.id === material._id && (
-                      <Check className="w-4 h-4 text-primary" />
-                    )}
-                  </button>
-                ))
-              )}
-            </div>
-          </div>
-        </>
-      )}
-      {error && <p className="mt-1 text-sm text-destructive">{error}</p>}
-    </div>
-  )
-}
 
 export function RecordMaterial() {
   const navigate = useNavigate()
@@ -142,6 +35,7 @@ export function RecordMaterial() {
     control,
     watch,
     setValue,
+    clearErrors,
     formState: { errors },
     reset,
   } = useForm<SiteRecordFormData>({
@@ -158,6 +52,16 @@ export function RecordMaterial() {
   })
 
   const quantityReceived = watch('quantityReceived')
+
+  // Bulk recording state
+  const [isBulkMode, setIsBulkMode] = useState(false)
+  const [bulkItems, setBulkItems] = useState<Array<{
+    materialName: string
+    material_id?: string
+    quantityReceived: number
+    quantityUsed: number
+    notes?: string
+  }>>([])
 
   // Set site_id when sites are loaded (for single site case)
   useEffect(() => {
@@ -211,16 +115,89 @@ export function RecordMaterial() {
     },
   })
 
+  // Bulk create mutation
+  const { mutate: createBulkRecords, isPending: isBulkSubmitting } = useMutation({
+    mutationFn: siteRecordsApi.createMultipleSiteRecords,
+    onSuccess: () => {
+      toast.success(`${bulkItems.length} materials recorded successfully!`)
+      queryClient.invalidateQueries({ queryKey: ['site-records'] })
+      queryClient.invalidateQueries({ queryKey: ['site-dashboard-stats'] })
+      setBulkItems([])
+      reset()
+      navigate('/received')
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Failed to record materials')
+    },
+  })
+
   const onSubmit = (data: SiteRecordFormData) => {
-    createRecord({
-      site_id: data.site_id,
-      material_id: data.material_id,
-      materialName: data.materialName,
-      quantityReceived: data.quantityReceived,
-      quantityUsed: data.quantityUsed,
-      date: data.date,
-      notes: data.notes,
-    })
+    if (isBulkMode) {
+      // In bulk mode, submit all items at once
+      if (bulkItems.length === 0) {
+        toast.error('Please add at least one material')
+        return
+      }
+      const records = bulkItems.map(item => ({
+        site_id: data.site_id,
+        material_id: item.material_id,
+        materialName: item.materialName,
+        quantityReceived: item.quantityReceived,
+        quantityUsed: item.quantityUsed || 0,
+        date: data.date,
+        notes: item.notes || data.notes,
+      }))
+      createBulkRecords(records)
+    } else {
+      // Single mode
+      createRecord({
+        site_id: data.site_id,
+        material_id: data.material_id,
+        materialName: data.materialName,
+        quantityReceived: data.quantityReceived,
+        quantityUsed: data.quantityUsed,
+        date: data.date,
+        notes: data.notes,
+      })
+    }
+  }
+
+  // Add item to bulk list
+  const addBulkItem = (materialName: string, material_id?: string, quantity: number = 0, quantityUsed: number = 0, notes?: string) => {
+    if (!materialName || quantity <= 0) {
+      toast.error('Please enter material name and quantity')
+      return
+    }
+    setBulkItems([...bulkItems, { materialName, material_id, quantityReceived: quantity, quantityUsed, notes }])
+  }
+
+  // Remove item from bulk list
+  const removeBulkItem = (index: number) => {
+    setBulkItems(bulkItems.filter((_, i) => i !== index))
+  }
+
+  // Handle bulk submit directly (bypasses form validation)
+  const handleBulkSubmit = () => {
+    const site_id = watch('site_id')
+    const date = watch('date')
+    const notes = watch('notes')
+
+    if (bulkItems.length === 0) {
+      toast.error('Please add at least one material')
+      return
+    }
+
+    const records = bulkItems.map(item => ({
+      site_id,
+      material_id: item.material_id,
+      materialName: item.materialName,
+      quantityReceived: item.quantityReceived,
+      quantityUsed: item.quantityUsed || 0,
+      date,
+      notes: item.notes || notes,
+    }))
+
+    createBulkRecords(records)
   }
 
   if (sitesLoading) {
@@ -259,6 +236,41 @@ export function RecordMaterial() {
         </div>
       </div>
 
+      {/* Recording Mode Toggle */}
+      <div className="bg-card rounded-xl border border-border shadow-sm p-2 mb-4 flex gap-2">
+        <button
+          type="button"
+          onClick={() => {
+            setIsBulkMode(false)
+            clearErrors(['materialName', 'quantityReceived', 'quantityUsed'])
+          }}
+          className={cn(
+            'flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-colors',
+            !isBulkMode
+              ? 'bg-primary text-primary-foreground'
+              : 'text-muted-foreground hover:bg-muted'
+          )}
+        >
+          Single Record
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            setIsBulkMode(true)
+            clearErrors(['materialName', 'quantityReceived', 'quantityUsed'])
+            reset({ materialName: '', quantityReceived: 0, quantityUsed: 0 })
+          }}
+          className={cn(
+            'flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-colors',
+            isBulkMode
+              ? 'bg-primary text-primary-foreground'
+              : 'text-muted-foreground hover:bg-muted'
+          )}
+        >
+          Multiple Records
+        </button>
+      </div>
+
       {/* Form */}
       <form
         onSubmit={handleSubmit(onSubmit)}
@@ -290,74 +302,124 @@ export function RecordMaterial() {
           </div>
         )}
 
-        {/* Material Selection */}
-        <div>
-          <label className="block text-sm font-medium text-foreground mb-1.5">
-            Material *
-          </label>
-          <Controller
-            name="materialName"
-            control={control}
-            render={({ field }) => (
-              <MaterialSearchDropdown
-                value={{ id: field.value, name: field.value }}
-                onChange={(material) => {
-                  field.onChange(material.name)
-                }}
-                error={errors.materialName?.message}
-              />
-            )}
-          />
-        </div>
+        {/* Material Selection - Single Mode Only */}
+        {!isBulkMode && (
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-1.5">
+              Material *
+            </label>
+            <Controller
+              name="materialName"
+              control={control}
+              render={({ field }) => (
+                <MaterialSearchDropdown
+                  value={{ id: field.value, name: field.value }}
+                  onChange={(material) => {
+                    field.onChange(material.name)
+                  }}
+                  error={errors.materialName?.message}
+                />
+              )}
+            />
+          </div>
+        )}
 
-        {/* Quantity Received */}
-        <div>
-          <label className="block text-sm font-medium text-foreground mb-1.5">
-            Quantity Received *
-          </label>
-          <input
-            type="number"
-            min="0.01"
-            step="0.01"
-            {...register('quantityReceived')}
-            className={cn(
-              'w-full px-4 py-2.5 rounded-lg border bg-background',
-              errors.quantityReceived ? 'border-destructive' : 'border-input'
+        {/* Quantity Received - Single Mode Only */}
+        {!isBulkMode && (
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-1.5">
+              Quantity Received *
+            </label>
+            <input
+              type="number"
+              min="0.01"
+              step="0.01"
+              {...register('quantityReceived')}
+              className={cn(
+                'w-full px-4 py-2.5 rounded-lg border bg-background',
+                errors.quantityReceived ? 'border-destructive' : 'border-input'
+              )}
+              placeholder="0.00"
+            />
+            {errors.quantityReceived && (
+              <p className="mt-1 text-sm text-destructive">
+                {errors.quantityReceived.message}
+              </p>
             )}
-            placeholder="0.00"
-          />
-          {errors.quantityReceived && (
-            <p className="mt-1 text-sm text-destructive">
-              {errors.quantityReceived.message}
-            </p>
-          )}
-        </div>
+          </div>
+        )}
 
-        {/* Quantity Used */}
-        <div>
-          <label className="block text-sm font-medium text-foreground mb-1.5">
-            Quantity Used (Optional)
-          </label>
-          <input
-            type="number"
-            min="0"
-            step="0.01"
-            {...register('quantityUsed')}
-            className={cn(
-              'w-full px-4 py-2.5 rounded-lg border bg-background',
-              errors.quantityUsed ? 'border-destructive' : 'border-input'
-            )}
-            placeholder="0.00"
-          />
-          <p className="mt-1 text-xs text-muted-foreground">
-            Must not exceed quantity received ({quantityReceived || 0})
-          </p>
-          {errors.quantityUsed && (
-            <p className="mt-1 text-sm text-destructive">
-              {errors.quantityUsed.message}
+        {/* Quantity Used - Single Mode Only */}
+        {!isBulkMode && (
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-1.5">
+              Quantity Used (Optional)
+            </label>
+            <input
+              type="number"
+              min="0"
+              step="0.01"
+              {...register('quantityUsed')}
+              className={cn(
+                'w-full px-4 py-2.5 rounded-lg border bg-background',
+                errors.quantityUsed ? 'border-destructive' : 'border-input'
+              )}
+              placeholder="0.00"
+            />
+            <p className="mt-1 text-xs text-muted-foreground">
+              Must not exceed quantity received ({quantityReceived || 0})
             </p>
-          )}
-        </div>
+            {errors.quantityUsed && (
+              <p className="mt-1 text-sm text-destructive">
+                {errors.quantityUsed.message}
+              </p>
+            )}
+          </div>
+        )}
+
+        {/* Bulk Recording UI */}
+        {isBulkMode && (
+          <BulkMaterialInput onAdd={addBulkItem} />
+        )}
+
+        {/* Bulk Items List */}
+        {isBulkMode && bulkItems.length > 0 && (
+          <div className="space-y-3">
+            <h3 className="text-sm font-medium text-foreground">
+              Materials to Record ({bulkItems.length})
+            </h3>
+            <div className="space-y-2">
+              {bulkItems.map((item, index) => (
+                <div
+                  key={index}
+                  className="flex items-center justify-between p-3 bg-muted rounded-lg"
+                >
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-foreground truncate">
+                      {item.materialName}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      Received: {item.quantityReceived}
+                      {item.quantityUsed > 0 && ` | Used: ${item.quantityUsed}`}
+                    </p>
+                    {item.notes && (
+                      <p className="text-xs text-muted-foreground truncate">
+                        {item.notes}
+                      </p>
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => removeBulkItem(index)}
+                    className="p-2 text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Date */}
         <div>
@@ -370,7 +432,7 @@ export function RecordMaterial() {
               type="date"
               {...register('date')}
               className={cn(
-                'w-full pl-10 pr-4 py-2.5 rounded-lg border',
+                'w-full pl-10 pr-4 py-2.5 rounded-lg border bg-background',
                 errors.date ? 'border-destructive' : 'border-input'
               )}
             />
@@ -405,26 +467,50 @@ export function RecordMaterial() {
           >
             Cancel
           </button>
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className={cn(
-              'flex-1 px-4 py-2.5 bg-primary text-primary-foreground rounded-lg',
-              'hover:bg-primary/90 transition-colors',
-              'flex items-center justify-center gap-2',
-              'disabled:opacity-50 disabled:cursor-not-allowed',
-              'cursor-pointer'
-            )}
-          >
-            {isSubmitting ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin" />
-                Recording...
-              </>
-            ) : (
-              'Record Material'
-            )}
-          </button>
+          {isBulkMode ? (
+            <button
+              type="button"
+              onClick={handleBulkSubmit}
+              disabled={isBulkSubmitting || bulkItems.length === 0}
+              className={cn(
+                'flex-1 px-4 py-2.5 bg-primary text-primary-foreground rounded-lg',
+                'hover:bg-primary/90 transition-colors',
+                'flex items-center justify-center gap-2',
+                'disabled:opacity-50 disabled:cursor-not-allowed',
+                'cursor-pointer'
+              )}
+            >
+              {isBulkSubmitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Recording...
+                </>
+              ) : (
+                `Record ${bulkItems.length} Material${bulkItems.length !== 1 ? 's' : ''}`
+              )}
+            </button>
+          ) : (
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className={cn(
+                'flex-1 px-4 py-2.5 bg-primary text-primary-foreground rounded-lg',
+                'hover:bg-primary/90 transition-colors',
+                'flex items-center justify-center gap-2',
+                'disabled:opacity-50 disabled:cursor-not-allowed',
+                'cursor-pointer'
+              )}
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Recording...
+                </>
+              ) : (
+                'Record Material'
+              )}
+            </button>
+          )}
         </div>
       </form>
     </div>
