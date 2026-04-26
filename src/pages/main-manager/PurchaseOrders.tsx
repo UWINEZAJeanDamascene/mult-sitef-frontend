@@ -341,7 +341,11 @@ export function PurchaseOrders() {
                       </td>
                       <td className="px-6 py-4 text-foreground">{po.items.length}</td>
                       <td className="px-6 py-4 font-medium text-foreground">
-                        {format.currency(po.totalAmount)}
+                        {format.currency(
+                          ['partial', 'received'].includes(po.status)
+                            ? po.items.reduce((sum, item) => sum + (item.quantityReceived * item.unitPrice), 0)
+                            : po.totalAmount
+                        )}
                       </td>
                       <td className="px-6 py-4 text-muted-foreground">
                         <div className="flex items-center gap-1">

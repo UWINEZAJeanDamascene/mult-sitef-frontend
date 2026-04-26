@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   ArrowLeft,
@@ -22,6 +22,8 @@ import {
   Trash2,
   Edit,
   Printer,
+  Truck,
+  Receipt,
 } from 'lucide-react'
 import { purchaseOrderApi } from '@/api/mainManager'
 import { format, cn } from '@/lib/utils'
@@ -315,15 +317,31 @@ export function PurchaseOrderDetails() {
           )}
 
           {canReceive && (
-            <button
-              onClick={() => setShowReceiveModal(true)}
-              disabled={receiveMutation.isPending}
-              className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
-            >
-              {receiveMutation.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
-              <Package className="w-4 h-4" />
-              Receive Items
-            </button>
+            <>
+              <Link
+                to={`/purchase-orders/${po.id}/create-dn`}
+                className="flex items-center gap-2 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
+              >
+                <Truck className="w-4 h-4" />
+                Create Delivery Note
+              </Link>
+              <button
+                onClick={() => setShowReceiveModal(true)}
+                disabled={receiveMutation.isPending}
+                className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
+              >
+                {receiveMutation.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
+                <Package className="w-4 h-4" />
+                Quick Receive
+              </button>
+              <Link
+                to={`/purchase-orders/${po.id}/create-return`}
+                className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+              >
+                <Receipt className="w-4 h-4" />
+                Create Return
+              </Link>
+            </>
           )}
 
           {canComplete && (
@@ -411,7 +429,7 @@ export function PurchaseOrderDetails() {
                         {format.currency(item.unitPrice)}
                       </td>
                       <td className="px-4 py-3 font-medium text-foreground">
-                        {format.currency(item.quantityOrdered * item.unitPrice)}
+                        {format.currency(item.quantityReceived * item.unitPrice)}
                       </td>
                     </tr>
                   ))}

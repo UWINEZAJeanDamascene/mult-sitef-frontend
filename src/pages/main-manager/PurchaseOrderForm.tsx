@@ -16,7 +16,8 @@ import {
   DollarSign,
   AlertCircle,
 } from 'lucide-react'
-import { purchaseOrderApi, sitesManagerApi, materialsCatalogApi } from '@/api/mainManager'
+import { purchaseOrderApi, sitesManagerApi, materialsCatalogApi, supplierApi } from '@/api/mainManager'
+import type { Supplier } from '@/types'
 import { format, cn } from '@/lib/utils'
 import type { POItem } from '@/types'
 
@@ -70,6 +71,11 @@ export function PurchaseOrderForm() {
   const { data: materials } = useQuery({
     queryKey: ['materials'],
     queryFn: materialsCatalogApi.getMaterials,
+  })
+
+  const { data: suppliers } = useQuery({
+    queryKey: ['suppliers'],
+    queryFn: supplierApi.getAll,
   })
 
   const { data: existingPO, isLoading: isLoadingPO } = useQuery({
@@ -143,6 +149,19 @@ export function PurchaseOrderForm() {
         return { ...item, ...updates }
       })
     )
+  }
+
+  const selectSupplier = (supplierId: string) => {
+    const selectedSupplier = suppliers?.find((s) => s.id === supplierId)
+    if (selectedSupplier) {
+      setSupplier({
+        name: selectedSupplier.name,
+        contactPerson: selectedSupplier.contactPerson || '',
+        email: selectedSupplier.email || '',
+        phone: selectedSupplier.phone || '',
+        address: selectedSupplier.address || '',
+      })
+    }
   }
 
   const selectMaterial = (itemId: string, materialId: string) => {
@@ -255,84 +274,104 @@ export function PurchaseOrderForm() {
             <User className="w-5 h-5 text-primary" />
             Supplier Information
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-4">
+            {/* Supplier Dropdown */}
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">
-                Supplier Name <span className="text-destructive">*</span>
+                Select Supplier <span className="text-muted-foreground">(optional)</span>
               </label>
-              <input
-                type="text"
-                value={supplier.name}
-                onChange={(e) => setSupplier({ ...supplier, name: e.target.value })}
-                className={cn(
-                  'w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary bg-background text-foreground',
-                  errors.supplierName ? 'border-destructive' : 'border-input'
-                )}
-                placeholder="Enter supplier name"
-              />
-              {errors.supplierName && (
-                <p className="text-sm text-destructive mt-1">{errors.supplierName}</p>
-              )}
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-1">
-                Contact Person
-              </label>
-              <input
-                type="text"
-                value={supplier.contactPerson}
-                onChange={(e) => setSupplier({ ...supplier, contactPerson: e.target.value })}
+              <select
+                onChange={(e) => e.target.value && selectSupplier(e.target.value)}
                 className="w-full px-4 py-2 border border-input rounded-lg focus:ring-2 focus:ring-primary bg-background text-foreground"
-                placeholder="Enter contact person"
-              />
+              >
+                <option value="">-- Type manually or select from list --</option>
+                {suppliers?.filter(s => s.isActive).map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name} {s.contactPerson ? `(${s.contactPerson})` : ''}
+                  </option>
+                ))}
+              </select>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-1">
-                Email
-              </label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <input
-                  type="email"
-                  value={supplier.email}
-                  onChange={(e) => setSupplier({ ...supplier, email: e.target.value })}
-                  className="w-full pl-10 pr-4 py-2 border border-input rounded-lg focus:ring-2 focus:ring-primary bg-background text-foreground"
-                  placeholder="Enter email"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-1">
-                Phone
-              </label>
-              <div className="relative">
-                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <input
-                  type="tel"
-                  value={supplier.phone}
-                  onChange={(e) => setSupplier({ ...supplier, phone: e.target.value })}
-                  className="w-full pl-10 pr-4 py-2 border border-input rounded-lg focus:ring-2 focus:ring-primary bg-background text-foreground"
-                  placeholder="Enter phone"
-                />
-              </div>
-            </div>
-
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-foreground mb-1">
-                Address
-              </label>
-              <div className="relative">
-                <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-1">
+                  Supplier Name <span className="text-destructive">*</span>
+                </label>
                 <input
                   type="text"
-                  value={supplier.address}
-                  onChange={(e) => setSupplier({ ...supplier, address: e.target.value })}
-                  className="w-full pl-10 pr-4 py-2 border border-input rounded-lg focus:ring-2 focus:ring-primary bg-background text-foreground"
-                  placeholder="Enter address"
+                  value={supplier.name}
+                  onChange={(e) => setSupplier({ ...supplier, name: e.target.value })}
+                  className={cn(
+                    'w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary bg-background text-foreground',
+                    errors.supplierName ? 'border-destructive' : 'border-input'
+                  )}
+                  placeholder="Enter supplier name"
                 />
+                {errors.supplierName && (
+                  <p className="text-sm text-destructive mt-1">{errors.supplierName}</p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-1">
+                  Contact Person
+                </label>
+                <input
+                  type="text"
+                  value={supplier.contactPerson}
+                  onChange={(e) => setSupplier({ ...supplier, contactPerson: e.target.value })}
+                  className="w-full px-4 py-2 border border-input rounded-lg focus:ring-2 focus:ring-primary bg-background text-foreground"
+                  placeholder="Enter contact person"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-1">
+                  Email
+                </label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <input
+                    type="email"
+                    value={supplier.email}
+                    onChange={(e) => setSupplier({ ...supplier, email: e.target.value })}
+                    className="w-full pl-10 pr-4 py-2 border border-input rounded-lg focus:ring-2 focus:ring-primary bg-background text-foreground"
+                    placeholder="Enter email"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-1">
+                  Phone
+                </label>
+                <div className="relative">
+                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <input
+                    type="tel"
+                    value={supplier.phone}
+                    onChange={(e) => setSupplier({ ...supplier, phone: e.target.value })}
+                    className="w-full pl-10 pr-4 py-2 border border-input rounded-lg focus:ring-2 focus:ring-primary bg-background text-foreground"
+                    placeholder="Enter phone"
+                  />
+                </div>
+              </div>
+
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-foreground mb-1">
+                  Address
+                </label>
+                <div className="relative">
+                  <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <input
+                    type="text"
+                    value={supplier.address}
+                    onChange={(e) => setSupplier({ ...supplier, address: e.target.value })}
+                    className="w-full pl-10 pr-4 py-2 border border-input rounded-lg focus:ring-2 focus:ring-primary bg-background text-foreground"
+                    placeholder="Enter address"
+                  />
+                </div>
               </div>
             </div>
           </div>

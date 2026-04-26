@@ -10,6 +10,7 @@ import {
   LineChart,
   Line,
   Legend,
+  TooltipProps,
 } from 'recharts'
 import {
   DollarSign,
@@ -205,13 +206,33 @@ export function MainManagerDashboard() {
                   />
                   <YAxis tick={{ fontSize: 10 }} />
                   <Tooltip 
-                    formatter={(value: number) => format.number(value, 2)}
-                    labelFormatter={(label) => format.date(label)}
-                    contentStyle={{ 
-                      backgroundColor: 'hsl(var(--popover))', 
-                      border: '1px solid hsl(var(--border))',
-                      borderRadius: '8px',
-                      padding: '8px 12px'
+                    content={({ active, payload, label }) => {
+                      if (!active || !payload || !payload.length) return null;
+                      const data = payload[0]?.payload as { date: string; received: number; used: number; materials?: Array<{ name: string; qty: number }> } | undefined;
+                      return (
+                        <div className="bg-popover border border-border rounded-lg p-3 shadow-lg">
+                          <p className="font-medium text-foreground mb-2">{format.date(label as string)}</p>
+                          <div className="space-y-1">
+                            <p className="text-emerald-500">Received: {format.number(data?.received || 0, 2)}</p>
+                            <p className="text-amber-500">Used: {format.number(data?.used || 0, 2)}</p>
+                          </div>
+                          {data?.materials && data.materials.length > 0 && (
+                            <div className="mt-2 pt-2 border-t border-border">
+                              <p className="text-xs text-muted-foreground mb-1">Products:</p>
+                              <div className="max-h-24 overflow-y-auto">
+                                {data.materials.slice(0, 5).map((m, i) => (
+                                  <p key={i} className="text-xs text-foreground truncate">
+                                    {m.name}: {format.number(m.qty, 0)}
+                                  </p>
+                                ))}
+                                {data.materials.length > 5 && (
+                                  <p className="text-xs text-muted-foreground">+{data.materials.length - 5} more...</p>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );
                     }}
                   />
                   <Legend />

@@ -10,7 +10,13 @@ import type {
   StockMovement,
   PurchaseOrder,
   CreatePODto,
-  ReceiveItemsDto
+  ReceiveItemsDto,
+  Supplier,
+  CreateSupplierDto,
+  DeliveryNote,
+  CreateDeliveryNoteDto,
+  PurchaseReturn,
+  CreatePurchaseReturnDto
 } from '@/types'
 
 // Dashboard API
@@ -37,6 +43,7 @@ export const dashboardApi = {
     date: string
     received: number
     used: number
+    materials: Array<{ name: string; qty: number }>
   }>> => {
     const { data } = await api.get(`/main-stock/movements?days=${days}`)
     return data
@@ -268,6 +275,38 @@ export const usersManagerApi = {
   },
 }
 
+// Supplier API
+export const supplierApi = {
+  getAll: async (): Promise<Supplier[]> => {
+    const { data } = await api.get('/suppliers')
+    return data
+  },
+
+  getById: async (id: string): Promise<Supplier> => {
+    const { data } = await api.get(`/suppliers/${id}`)
+    return data
+  },
+
+  create: async (supplierData: CreateSupplierDto): Promise<Supplier> => {
+    const { data } = await api.post('/suppliers', supplierData)
+    return data
+  },
+
+  update: async (id: string, supplierData: Partial<CreateSupplierDto>): Promise<Supplier> => {
+    const { data } = await api.put(`/suppliers/${id}`, supplierData)
+    return data
+  },
+
+  delete: async (id: string): Promise<void> => {
+    await api.delete(`/suppliers/${id}`)
+  },
+
+  toggleActive: async (id: string, isActive: boolean): Promise<Supplier> => {
+    const { data } = await api.patch(`/suppliers/${id}/active`, { isActive })
+    return data
+  },
+}
+
 // Purchase Order API
 export const purchaseOrderApi = {
   getAll: async (params?: {
@@ -423,5 +462,96 @@ export const purchaseOrderApi = {
   }>> => {
     const { data } = await api.get('/purchase-orders/reports/pending')
     return data
+  },
+}
+
+// Delivery Note API
+export const deliveryNoteApi = {
+  getAll: async (params?: {
+    page?: number
+    limit?: number
+    poId?: string
+    search?: string
+  }): Promise<{
+    records: DeliveryNote[]
+    total: number
+    page: number
+    totalPages: number
+  }> => {
+    const queryParams = new URLSearchParams()
+    if (params?.page) queryParams.append('page', params.page.toString())
+    if (params?.limit) queryParams.append('limit', params.limit.toString())
+    if (params?.poId) queryParams.append('poId', params.poId)
+    if (params?.search) queryParams.append('search', params.search)
+    
+    const { data } = await api.get(`/delivery-notes?${queryParams.toString()}`)
+    return data
+  },
+
+  getById: async (id: string): Promise<DeliveryNote> => {
+    const { data } = await api.get(`/delivery-notes/${id}`)
+    return data
+  },
+
+  getByPO: async (poId: string): Promise<DeliveryNote[]> => {
+    const { data } = await api.get(`/delivery-notes/po/${poId}`)
+    return data
+  },
+
+  create: async (data: CreateDeliveryNoteDto): Promise<DeliveryNote> => {
+    const { data: response } = await api.post('/delivery-notes', data)
+    return response
+  },
+
+  delete: async (id: string): Promise<void> => {
+    await api.delete(`/delivery-notes/${id}`)
+  },
+}
+
+// Purchase Return API
+export const purchaseReturnApi = {
+  getAll: async (params?: {
+    page?: number
+    limit?: number
+    poId?: string
+    search?: string
+  }): Promise<{
+    records: PurchaseReturn[]
+    total: number
+    page: number
+    totalPages: number
+  }> => {
+    const queryParams = new URLSearchParams()
+    if (params?.page) queryParams.append('page', params.page.toString())
+    if (params?.limit) queryParams.append('limit', params.limit.toString())
+    if (params?.poId) queryParams.append('poId', params.poId)
+    if (params?.search) queryParams.append('search', params.search)
+    
+    const { data } = await api.get(`/purchase-returns?${queryParams.toString()}`)
+    return data
+  },
+
+  getById: async (id: string): Promise<PurchaseReturn> => {
+    const { data } = await api.get(`/purchase-returns/${id}`)
+    return data
+  },
+
+  getByPO: async (poId: string): Promise<PurchaseReturn[]> => {
+    const { data } = await api.get(`/purchase-returns/po/${poId}`)
+    return data
+  },
+
+  create: async (data: CreatePurchaseReturnDto): Promise<PurchaseReturn> => {
+    const { data: response } = await api.post('/purchase-returns', data)
+    return response
+  },
+
+  updateRefundStatus: async (id: string, refundStatus: string, refundAmount?: number): Promise<PurchaseReturn> => {
+    const { data } = await api.patch(`/purchase-returns/${id}/refund`, { refundStatus, refundAmount })
+    return data
+  },
+
+  delete: async (id: string): Promise<void> => {
+    await api.delete(`/purchase-returns/${id}`)
   },
 }

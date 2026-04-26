@@ -46,7 +46,7 @@ export function RecordMaterial() {
       quantityUsed: 0,
       date: new Date().toISOString().split('T')[0],
       notes: '',
-      site_id: mySites?.[0]?._id || '',
+      site_id: '',
       materialName: '',
     },
   })
@@ -243,6 +243,7 @@ export function RecordMaterial() {
           onClick={() => {
             setIsBulkMode(false)
             clearErrors(['materialName', 'quantityReceived', 'quantityUsed'])
+            reset({ materialName: '', quantityReceived: 0, quantityUsed: 0 })
           }}
           className={cn(
             'flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-colors',
@@ -277,7 +278,7 @@ export function RecordMaterial() {
         className="bg-card rounded-xl border border-border shadow-sm p-6 space-y-6"
       >
         {/* Site Selection */}
-        {mySites.length > 1 && (
+        {mySites && mySites.length > 1 && (
           <div>
             <label className="block text-sm font-medium text-foreground mb-1.5">
               Site *
@@ -286,17 +287,17 @@ export function RecordMaterial() {
               {...register('site_id')}
               className={cn(
                 'w-full px-4 py-2.5 rounded-lg border bg-background',
-                errors.site_id ? 'border-destructive' : 'border-input'
+                errors?.site_id ? 'border-destructive' : 'border-input'
               )}
             >
               <option value="">Select a site...</option>
-              {mySites.map((site) => (
+              {mySites?.map((site) => (
                 <option key={site._id} value={site._id}>
                   {site.name}
                 </option>
               ))}
             </select>
-            {errors.site_id && (
+            {errors?.site_id?.message && (
               <p className="mt-1 text-sm text-destructive">{errors.site_id.message}</p>
             )}
           </div>
@@ -337,11 +338,11 @@ export function RecordMaterial() {
               {...register('quantityReceived')}
               className={cn(
                 'w-full px-4 py-2.5 rounded-lg border bg-background',
-                errors.quantityReceived ? 'border-destructive' : 'border-input'
+                errors?.quantityReceived ? 'border-destructive' : 'border-input'
               )}
               placeholder="0.00"
             />
-            {errors.quantityReceived && (
+            {errors?.quantityReceived?.message && (
               <p className="mt-1 text-sm text-destructive">
                 {errors.quantityReceived.message}
               </p>
@@ -362,14 +363,14 @@ export function RecordMaterial() {
               {...register('quantityUsed')}
               className={cn(
                 'w-full px-4 py-2.5 rounded-lg border bg-background',
-                errors.quantityUsed ? 'border-destructive' : 'border-input'
+                errors?.quantityUsed ? 'border-destructive' : 'border-input'
               )}
               placeholder="0.00"
             />
             <p className="mt-1 text-xs text-muted-foreground">
               Must not exceed quantity received ({quantityReceived || 0})
             </p>
-            {errors.quantityUsed && (
+            {errors?.quantityUsed?.message && (
               <p className="mt-1 text-sm text-destructive">
                 {errors.quantityUsed.message}
               </p>
@@ -433,11 +434,11 @@ export function RecordMaterial() {
               {...register('date')}
               className={cn(
                 'w-full pl-10 pr-4 py-2.5 rounded-lg border bg-background',
-                errors.date ? 'border-destructive' : 'border-input'
+                errors?.date ? 'border-destructive' : 'border-input'
               )}
             />
           </div>
-          {errors.date && (
+          {errors?.date?.message && (
             <p className="mt-1 text-sm text-destructive">{errors.date.message}</p>
           )}
         </div>

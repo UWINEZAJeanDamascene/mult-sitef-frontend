@@ -32,6 +32,16 @@ export const siteRecordsApi = {
     if (params?.limit) queryParams.append('limit', params.limit.toString())
     
     const { data } = await api.get(`/site-records?siteId=${siteId}&${queryParams.toString()}`)
+
+    // Normalize id -> _id for consistency with frontend types
+    if (data && Array.isArray(data.records)) {
+      const normalizedRecords = data.records.map((r: any) => ({
+        ...r,
+        _id: r._id || r.id || r._id,
+      }))
+      return { ...data, records: normalizedRecords }
+    }
+
     return data
   },
 
@@ -53,6 +63,17 @@ export const siteRecordsApi = {
     if (params?.limit) queryParams.append('limit', params.limit.toString())
     
     const { data } = await api.get(`/site-records/my?${queryParams.toString()}`)
+
+    // Normalize backend id field to frontend expected `_id` to ensure components
+    // that rely on `_id` (keys, editing state) behave correctly.
+    if (data && Array.isArray(data.records)) {
+      const normalizedRecords = data.records.map((r: any) => ({
+        ...r,
+        _id: r._id || r.id || r._id,
+      }))
+      return { ...data, records: normalizedRecords }
+    }
+
     return data
   },
 
@@ -138,6 +159,15 @@ export const siteRecordsApi = {
     }))
     const { data } = await api.post('/site-records/bulk', payload)
     return data
+  },
+
+  // Update site record (for recording usage)
+  updateSiteRecord: async (id: string, data: {
+    quantityUsed?: number
+    notes?: string
+  }): Promise<SiteRecord> => {
+    const response = await api.put(`/site-records/${id}`, data)
+    return response.data
   },
 }
 

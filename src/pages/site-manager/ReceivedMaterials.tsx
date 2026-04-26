@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   Package,
   Search,
@@ -10,15 +10,20 @@ import {
   ChevronRight,
   ArrowUpRight,
   Filter,
+  Edit,
+  X,
+  Check,
 } from 'lucide-react'
 import { siteRecordsApi } from '@/api/sites'
 import { useAuth } from '@/context/AuthContext'
 import { cn, format } from '@/lib/utils'
+import toast from 'react-hot-toast'
 
 const ITEMS_PER_PAGE = 10
 
 export function ReceivedMaterials() {
   const { user } = useAuth()
+  const queryClient = useQueryClient()
   const [page, setPage] = useState(1)
   const [searchQuery, setSearchQuery] = useState('')
   const [dateRange, setDateRange] = useState({
@@ -26,6 +31,24 @@ export function ReceivedMaterials() {
     endDate: '',
   })
   const [showFilters, setShowFilters] = useState(false)
+  const [editingRecord, setEditingRecord] = useState<string | null>(null)
+  const [editQuantityUsed, setEditQuantityUsed] = useState('')
+  const [editNotes, setEditNotes] = useState('')
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: { quantityUsed: number; notes?: string } }) =>
+      siteRecordsApi.updateSiteRecord(id, data),
+    onSuccess: () => {
+      toast.success('Usage recorded successfully')
+      queryClient.invalidateQueries({ queryKey: ['site-records', 'received'] })
+      setEditingRecord(null)
+      setEditQuantityUsed('')
+      setEditNotes('')
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || 'Failed to update record')
+    },
+  })
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['site-records', 'received', page, searchQuery, dateRange],
@@ -207,12 +230,15 @@ export function ReceivedMaterials() {
                 <th className="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                   Recorded By
                 </th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
               {records.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-6 py-12 text-center">
+                  <td colSpan={8} className="px-6 py-12 text-center">
                     <Package className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
                     <h3 className="text-lg font-medium text-foreground">
                       No records found
@@ -234,13 +260,37 @@ export function ReceivedMaterials() {
                       {format.number(record.quantityReceived, 2)}
                     </td>
                     <td className="px-6 py-4 text-foreground">
-                      {format.number(record.quantityUsed, 2)}
+                      {record._id && record.quantityReceived > 0 && editingRecord === record._id ? (
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            value={editQuantityUsed}
+                            onChange={(e) => setEditQuantityUsed(e.target.value)}
+                            className="w-24 px-2 py-1 text-sm rounded border border-input bg-background"
+                            placeholder="Qty Used"
+                          />
+                        </div>
+                      ) : (
+                        format.number(record.quantityUsed, 2)
+                      )}
                     </td>
                     <td className="px-6 py-4 text-muted-foreground">
                       {format.date(record.date)}
                     </td>
                     <td className="px-6 py-4 text-muted-foreground max-w-xs truncate">
-                      {record.notes || '-'}
+                      {record._id && record.quantityReceived > 0 && editingRecord === record._id ? (
+                        <input
+                          type="text"
+                          value={editNotes}
+                          onChange={(e) => setEditNotes(e.target.value)}
+                          className="w-full px-2 py-1 text-sm rounded border border-input bg-background"
+                          placeholder="Add notes..."
+                        />
+                      ) : (
+                        record.notes || '-'
+                      )}
                     </td>
                     <td className="px-6 py-4">
                       {record.syncedToMainStock ? (
@@ -257,6 +307,61 @@ export function ReceivedMaterials() {
                     </td>
                     <td className="px-6 py-4 text-foreground">
                       {record.recordedByName || record.recordedBy}
+                    </td>
+                    <td className="px-6 py-4">
+                      {record.quantityReceived > 0 && (
+                        editingRecord === record._id ? (
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => {
+                                const qty = parseFloat(editQuantityUsed)
+                                if (isNaN(qty) || qty < 0) {
+                                  toast.error('Please enter a valid quantity')
+                                  return
+                                }
+                                if (qty > record.quantityReceived) {
+                                  toast.error('Quantity used cannot exceed quantity received')
+                                  return
+                                }
+                                updateMutation.mutate({
+                                  id: String(record._id),
+                                  data: { quantityUsed: qty, notes: editNotes || undefined },
+                                })
+                              }}
+                              disabled={updateMutation.isPending}
+                              className="p-1.5 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                            >
+                              {updateMutation.isPending ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                              ) : (
+                                <Check className="w-4 h-4" />
+                              )}
+                            </button>
+                            <button
+                              onClick={() => {
+                                setEditingRecord(null)
+                                setEditQuantityUsed('')
+                                setEditNotes('')
+                              }}
+                              className="p-1.5 rounded-lg bg-muted text-muted-foreground hover:bg-muted/80"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => {
+                              setEditingRecord(record._id)
+                              setEditQuantityUsed(record.quantityUsed.toString())
+                              setEditNotes(record.notes || '')
+                            }}
+                            className="p-1.5 rounded-lg bg-muted text-muted-foreground hover:bg-muted/80"
+                            title="Record usage"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </button>
+                        )
+                      )}
                     </td>
                   </tr>
                 ))

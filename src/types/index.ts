@@ -180,6 +180,28 @@ export {
   type ActionLogsFilter,
 } from './actionLog'
 
+// Supplier Type
+export interface Supplier {
+  id: string;
+  name: string;
+  contactPerson?: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+  company_id: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateSupplierDto {
+  name: string;
+  contactPerson?: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+}
+
 // Purchase Order Types
 export interface POItem {
   _id?: string;
@@ -222,6 +244,135 @@ export interface PurchaseOrder {
   createdBy: string;
   createdAt: string;
   updatedAt: string;
+}
+
+// Delivery Note Types
+export interface DeliveryNoteItem {
+  materialName: string;
+  material_id?: string;
+  quantityOrdered: number;
+  quantityDelivered: number;
+  unit: string;
+  unitPrice: number;
+  totalPrice?: number;
+  condition?: 'good' | 'damaged' | 'partial';
+  notes?: string;
+}
+
+export interface DeliveryNote {
+  id: string;
+  dnNumber: string;
+  poId: string;
+  poNumber: string;
+  supplier: {
+    name: string;
+    contactPerson?: string;
+    email?: string;
+    phone?: string;
+  };
+  site: {
+    _id: string;
+    name: string;
+    location?: string;
+  };
+  items: DeliveryNoteItem[];
+  deliveryDate: string;
+  receivedBy: string;
+  receivedByName?: string;
+  carrier?: string;
+  trackingNumber?: string;
+  condition: 'good' | 'damaged' | 'partial';
+  notes?: string;
+  attachments?: string[];
+  subTotal?: number;
+  taxRate?: number;
+  taxAmount?: number;
+  totalAmount?: number;
+  company_id: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateDeliveryNoteDto {
+  poId: string;
+  items: {
+    materialName: string;
+    material_id?: string;
+    quantityOrdered: number;
+    quantityDelivered: number;
+    unit: string;
+    unitPrice: number;
+    condition?: 'good' | 'damaged' | 'partial';
+    notes?: string;
+  }[];
+  deliveryDate: string;
+  carrier?: string;
+  trackingNumber?: string;
+  condition: 'good' | 'damaged' | 'partial';
+  notes?: string;
+  attachments?: string[];
+}
+
+// Purchase Return Types
+export interface PurchaseReturnItem {
+  materialName: string;
+  material_id?: string;
+  quantityReturned: number;
+  unit: string;
+  unitPrice: number;
+  reason: 'defective' | 'wrong_item' | 'overage' | 'other';
+  notes?: string;
+}
+
+export interface PurchaseReturn {
+  id: string;
+  returnNumber: string;
+  poId: string;
+  poNumber: string;
+  supplier: {
+    name: string;
+    contactPerson?: string;
+    email?: string;
+    phone?: string;
+  };
+  site: {
+    _id: string;
+    name: string;
+    location?: string;
+  };
+  items: PurchaseReturnItem[];
+  returnDate: string;
+  returnedBy: string;
+  returnedByName?: string;
+  carrier?: string;
+  trackingNumber?: string;
+  condition: 'good' | 'damaged' | 'partial';
+  refundStatus: 'pending' | 'processed' | 'refunded';
+  refundAmount?: number;
+  notes?: string;
+  attachments?: string[];
+  company_id: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreatePurchaseReturnDto {
+  poId: string;
+  items: {
+    materialName: string;
+    material_id?: string;
+    quantityReturned: number;
+    unit: string;
+    unitPrice: number;
+    reason: 'defective' | 'wrong_item' | 'overage' | 'other';
+    notes?: string;
+  }[];
+  returnDate: string;
+  carrier?: string;
+  trackingNumber?: string;
+  condition: 'good' | 'damaged' | 'partial';
+  notes?: string;
+  attachments?: string[];
 }
 
 export interface CreatePODto {

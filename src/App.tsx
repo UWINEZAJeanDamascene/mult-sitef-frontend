@@ -34,6 +34,14 @@ import {
   PurchaseOrderForm,
   PurchaseOrderDetails,
   PurchaseOrderReports,
+  Suppliers,
+  SupplierDetails,
+  DeliveryNotes,
+  DeliveryNoteDetails,
+  CreateDeliveryNote,
+  PurchaseReturns,
+  PurchaseReturnDetails,
+  CreatePurchaseReturn,
 } from '@/pages/main-manager'
 
 // Role-based dashboard redirect
@@ -254,6 +262,70 @@ function App() {
               element={
                 <ProtectedRoute requiredRole={UserRole.MAIN_MANAGER}>
                   <PurchaseOrderReports />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/suppliers"
+              element={
+                <ProtectedRoute requiredRole={UserRole.MAIN_MANAGER}>
+                  <Suppliers />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/suppliers/:id"
+              element={
+                <ProtectedRoute requiredRole={UserRole.MAIN_MANAGER}>
+                  <SupplierDetails />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/delivery-notes"
+              element={
+                <ProtectedRoute requiredRole={UserRole.MAIN_MANAGER}>
+                  <DeliveryNotes />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/delivery-notes/:id"
+              element={
+                <ProtectedRoute requiredRole={UserRole.MAIN_MANAGER}>
+                  <DeliveryNoteDetails />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/purchase-orders/:poId/create-dn"
+              element={
+                <ProtectedRoute requiredRole={UserRole.MAIN_MANAGER}>
+                  <CreateDeliveryNote />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/purchase-returns"
+              element={
+                <ProtectedRoute requiredRole={UserRole.MAIN_MANAGER}>
+                  <PurchaseReturns />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/purchase-returns/:id"
+              element={
+                <ProtectedRoute requiredRole={UserRole.MAIN_MANAGER}>
+                  <PurchaseReturnDetails />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/purchase-orders/:poId/create-return"
+              element={
+                <ProtectedRoute requiredRole={UserRole.MAIN_MANAGER}>
+                  <CreatePurchaseReturn />
                 </ProtectedRoute>
               }
             />
