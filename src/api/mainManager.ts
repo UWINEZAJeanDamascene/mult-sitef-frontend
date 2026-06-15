@@ -1,11 +1,11 @@
-import { api } from './axios'
-import type { 
-  MainStockRecord, 
-  Site, 
-  SiteRecord, 
-  Material, 
-  User, 
-  UsedMaterialsView, 
+import { api } from "./axios";
+import type {
+  MainStockRecord,
+  Site,
+  SiteRecord,
+  Material,
+  User,
+  UsedMaterialsView,
   RemainingMaterialsView,
   StockMovement,
   PurchaseOrder,
@@ -16,542 +16,711 @@ import type {
   DeliveryNote,
   CreateDeliveryNoteDto,
   PurchaseReturn,
-  CreatePurchaseReturnDto
-} from '@/types'
+  CreatePurchaseReturnDto,
+} from "@/types";
 
 // Dashboard API
 export const dashboardApi = {
   getStats: async (): Promise<{
-    totalStockValue: number
-    pendingPricingCount: number
-    activeSitesCount: number
-    directRecordsThisMonth: number
+    totalStockValue: number;
+    pendingPricingCount: number;
+    activeSitesCount: number;
+    directRecordsThisMonth: number;
   }> => {
-    const { data } = await api.get('/main-stock/dashboard-stats')
-    return data
+    const { data } = await api.get("/main-stock/dashboard-stats");
+    return data;
   },
 
-  getTopMaterials: async (limit = 10): Promise<Array<{
-    materialName: string
-    quantityReceived: number
-  }>> => {
-    const { data } = await api.get(`/main-stock/top-materials?limit=${limit}`)
-    return data
+  getTopMaterials: async (
+    limit = 10,
+  ): Promise<
+    Array<{
+      materialName: string;
+      quantityReceived: number;
+    }>
+  > => {
+    const { data } = await api.get(`/main-stock/top-materials?limit=${limit}`);
+    return data;
   },
 
-  getStockMovements: async (days = 30): Promise<Array<{
-    date: string
-    received: number
-    used: number
-    materials: Array<{ name: string; qty: number }>
-  }>> => {
-    const { data } = await api.get(`/main-stock/movements?days=${days}`)
-    return data
+  getStockMovements: async (
+    days = 30,
+  ): Promise<
+    Array<{
+      date: string;
+      received: number;
+      used: number;
+      materials: Array<{ name: string; qty: number }>;
+    }>
+  > => {
+    const { data } = await api.get(`/main-stock/movements?days=${days}`);
+    return data;
   },
-}
+};
 
 // Sites API for main manager
 export const sitesManagerApi = {
   getAllSites: async (): Promise<Site[]> => {
-    const { data } = await api.get('/sites')
-    return data
+    const { data } = await api.get("/sites");
+    return data;
   },
 
-  getSiteDetails: async (siteId: string): Promise<{
-    site: Site
-    records: SiteRecord[]
+  getSiteDetails: async (
+    siteId: string,
+    params?: { startDate?: string; endDate?: string },
+  ): Promise<{
+    site: Site;
+    records: SiteRecord[];
     stats: {
-      recordsThisMonth: number
-      pendingPriceCount: number
-      lastActivityDate: string | null
-    }
+      recordsThisMonth: number;
+      pendingPriceCount: number;
+      lastActivityDate: string | null;
+    };
   }> => {
-    const { data } = await api.get(`/sites/${siteId}/details`)
-    return data
+    const qs = new URLSearchParams();
+    if (params?.startDate) qs.append("startDate", params.startDate);
+    if (params?.endDate) qs.append("endDate", params.endDate);
+    const query = qs.toString() ? `?${qs.toString()}` : "";
+    const { data } = await api.get(`/sites/${siteId}/details${query}`);
+    return data;
   },
 
   createSite: async (siteData: {
-    name: string
-    location: string
-    description?: string
+    name: string;
+    location: string;
+    description?: string;
   }): Promise<Site> => {
-    const { data } = await api.post('/sites', siteData)
-    return data
+    const { data } = await api.post("/sites", siteData);
+    return data;
   },
 
-  updateSite: async (siteId: string, siteData: Partial<Site>): Promise<Site> => {
-    const { data } = await api.put(`/sites/${siteId}`, siteData)
-    return data
+  updateSite: async (
+    siteId: string,
+    siteData: Partial<Site>,
+  ): Promise<Site> => {
+    const { data } = await api.put(`/sites/${siteId}`, siteData);
+    return data;
   },
 
-  toggleSiteActive: async (siteId: string, isActive: boolean): Promise<Site> => {
-    const { data } = await api.patch(`/sites/${siteId}/active`, { isActive })
-    return data
+  toggleSiteActive: async (
+    siteId: string,
+    isActive: boolean,
+  ): Promise<Site> => {
+    const { data } = await api.patch(`/sites/${siteId}/active`, { isActive });
+    return data;
   },
 
   assignManager: async (siteId: string, userId: string): Promise<void> => {
-    await api.post(`/sites/${siteId}/assign`, { userId })
+    await api.post(`/sites/${siteId}/assign`, { userId });
   },
 
   removeManager: async (siteId: string, userId: string): Promise<void> => {
-    await api.delete(`/sites/${siteId}/assign/${userId}`)
+    await api.delete(`/sites/${siteId}/assign/${userId}`);
   },
 
-  getSiteManagers: async (siteId: string): Promise<Array<{
-    id: string
-    name: string
-    email: string
-    role: string
-    isActive: boolean
-  }>> => {
-    const { data } = await api.get(`/sites/${siteId}/managers`)
-    return data
+  deleteSite: async (siteId: string): Promise<void> => {
+    await api.delete(`/sites/${siteId}`);
   },
 
-  getAvailableManagers: async (): Promise<Array<{
-    id: string
-    name: string
-    email: string
-  }>> => {
-    const { data } = await api.get('/sites/managers/available')
-    return data
+  getSiteManagers: async (
+    siteId: string,
+  ): Promise<
+    Array<{
+      id: string;
+      name: string;
+      email: string;
+      role: string;
+      isActive: boolean;
+    }>
+  > => {
+    const { data } = await api.get(`/sites/${siteId}/managers`);
+    return data;
   },
-}
+
+  getAvailableManagers: async (): Promise<
+    Array<{
+      id: string;
+      name: string;
+      email: string;
+    }>
+  > => {
+    const { data } = await api.get("/sites/managers/available");
+    return data;
+  },
+};
 
 // Main Stock Records API
 export const mainStockApi = {
   getRecords: async (params?: {
-    page?: number
-    limit?: number
-    source?: 'all' | 'site' | 'direct'
-    status?: 'all' | 'pending_price' | 'priced' | 'direct'
-    startDate?: string
-    endDate?: string
-    materialName?: string
+    page?: number;
+    limit?: number;
+    source?: "all" | "site" | "direct";
+    status?: "all" | "pending_price" | "priced" | "direct";
+    startDate?: string;
+    endDate?: string;
+    materialName?: string;
   }): Promise<{
-    records: MainStockRecord[]
-    total: number
-    page: number
-    totalPages: number
+    records: MainStockRecord[];
+    total: number;
+    page: number;
+    totalPages: number;
   }> => {
-    const queryParams = new URLSearchParams()
-    if (params?.page) queryParams.append('page', params.page.toString())
-    if (params?.limit) queryParams.append('limit', params.limit.toString())
-    if (params?.source && params.source !== 'all') queryParams.append('source', params.source)
-    if (params?.status && params.status !== 'all') queryParams.append('status', params.status)
-    if (params?.startDate) queryParams.append('startDate', params.startDate)
-    if (params?.endDate) queryParams.append('endDate', params.endDate)
-    if (params?.materialName) queryParams.append('materialName', params.materialName)
-    
-    const { data } = await api.get(`/main-stock?${queryParams.toString()}`)
-    return data
+    const queryParams = new URLSearchParams();
+    if (params?.page) queryParams.append("page", params.page.toString());
+    if (params?.limit) queryParams.append("limit", params.limit.toString());
+    if (params?.source && params.source !== "all")
+      queryParams.append("source", params.source);
+    if (params?.status && params.status !== "all")
+      queryParams.append("status", params.status);
+    if (params?.startDate) queryParams.append("startDate", params.startDate);
+    if (params?.endDate) queryParams.append("endDate", params.endDate);
+    if (params?.materialName)
+      queryParams.append("materialName", params.materialName);
+
+    const { data } = await api.get(`/main-stock?${queryParams.toString()}`);
+    return data;
   },
 
   getRecordById: async (id: string): Promise<MainStockRecord> => {
-    const { data } = await api.get(`/main-stock/${id}`)
-    return data
+    const { data } = await api.get(`/main-stock/${id}`);
+    return data;
   },
 
   updatePrice: async (id: string, price: number): Promise<MainStockRecord> => {
-    const { data } = await api.patch(`/main-stock/${id}/price`, { price })
-    return data
+    const { data } = await api.patch(`/main-stock/${id}/price`, { price });
+    return data;
   },
 
-  markAsReceived: async (id: string, price?: number): Promise<MainStockRecord> => {
-    const { data } = await api.patch(`/main-stock/${id}/receive`, { price })
-    return data
+  markAsReceived: async (
+    id: string,
+    price?: number,
+  ): Promise<MainStockRecord> => {
+    const { data } = await api.patch(`/main-stock/${id}/receive`, { price });
+    return data;
   },
 
   createDirectRecord: async (recordData: {
-    materialName: string
-    material_id?: string
-    quantityReceived: number
-    quantityUsed: number
-    price: number
-    date: string
-    notes?: string
+    materialName: string;
+    material_id?: string;
+    quantityReceived: number;
+    quantityUsed: number;
+    price: number;
+    date: string;
+    notes?: string;
   }): Promise<MainStockRecord> => {
-    const { data } = await api.post('/main-stock/direct', recordData)
-    return data
+    const { data } = await api.post("/main-stock/direct", recordData);
+    return data;
   },
 
   getStockMovements: async (recordId: string): Promise<StockMovement[]> => {
-    const { data } = await api.get(`/main-stock/${recordId}/movements`)
-    return data
+    const { data } = await api.get(`/main-stock/${recordId}/movements`);
+    return data;
   },
-}
+};
 
 // Views API
 export const viewsApi = {
   getUsedMaterials: async (params?: {
-    startDate?: string
-    endDate?: string
+    startDate?: string;
+    endDate?: string;
   }): Promise<UsedMaterialsView[]> => {
-    const queryParams = new URLSearchParams()
-    if (params?.startDate) queryParams.append('startDate', params.startDate)
-    if (params?.endDate) queryParams.append('endDate', params.endDate)
-    
-    const { data } = await api.get(`/views/used?${queryParams.toString()}`)
-    return data
+    const queryParams = new URLSearchParams();
+    if (params?.startDate) queryParams.append("startDate", params.startDate);
+    if (params?.endDate) queryParams.append("endDate", params.endDate);
+
+    const { data } = await api.get(`/views/used?${queryParams.toString()}`);
+    return data;
   },
 
   getRemainingMaterials: async (params?: {
-    startDate?: string
-    endDate?: string
+    startDate?: string;
+    endDate?: string;
   }): Promise<RemainingMaterialsView[]> => {
-    const queryParams = new URLSearchParams()
-    if (params?.startDate) queryParams.append('startDate', params.startDate)
-    if (params?.endDate) queryParams.append('endDate', params.endDate)
-    
-    const { data } = await api.get(`/views/remaining?${queryParams.toString()}`)
-    return data
+    const queryParams = new URLSearchParams();
+    if (params?.startDate) queryParams.append("startDate", params.startDate);
+    if (params?.endDate) queryParams.append("endDate", params.endDate);
+
+    const { data } = await api.get(
+      `/views/remaining?${queryParams.toString()}`,
+    );
+    return data;
   },
-}
+};
 
 // Materials Catalog API
 export const materialsCatalogApi = {
   getMaterials: async (): Promise<Material[]> => {
-    const { data } = await api.get('/materials')
-    return data
+    const { data } = await api.get("/materials");
+    return data;
   },
 
   createMaterial: async (materialData: {
-    name: string
-    unit: string
-    description?: string
+    name: string;
+    unit: string;
+    description?: string;
   }): Promise<Material> => {
-    const { data } = await api.post('/materials', materialData)
-    return data
+    const { data } = await api.post("/materials", materialData);
+    return data;
   },
 
-  updateMaterial: async (id: string, materialData: Partial<Material>): Promise<Material> => {
-    const { data } = await api.put(`/materials/${id}`, materialData)
-    return data
+  updateMaterial: async (
+    id: string,
+    materialData: Partial<Material>,
+  ): Promise<Material> => {
+    const { data } = await api.put(`/materials/${id}`, materialData);
+    return data;
   },
 
-  toggleMaterialActive: async (id: string, isActive: boolean): Promise<Material> => {
-    const { data } = await api.patch(`/materials/${id}/active`, { isActive })
-    return data
+  toggleMaterialActive: async (
+    id: string,
+    isActive: boolean,
+  ): Promise<Material> => {
+    const { data } = await api.patch(`/materials/${id}/active`, { isActive });
+    return data;
   },
-}
+};
 
 // Users Management API
 export const usersManagerApi = {
   getUsers: async (): Promise<User[]> => {
-    const { data } = await api.get('/auth/users')
-    return data
+    const { data } = await api.get("/auth/users");
+    return data;
   },
 
   createUser: async (userData: {
-    name: string
-    email: string
-    password: string
-    role: string
-    company_id: string
-    assignedSiteIds?: string[]
+    name: string;
+    email: string;
+    password: string;
+    role: string;
+    company_id: string;
+    assignedSiteIds?: string[];
   }): Promise<User> => {
-    const { data } = await api.post('/auth/register', userData)
-    return data
+    const { data } = await api.post("/auth/register", userData);
+    return data;
   },
 
   updateUser: async (id: string, userData: Partial<User>): Promise<User> => {
-    const { data } = await api.put(`/auth/users/${id}`, userData)
-    return data
+    const { data } = await api.put(`/auth/users/${id}`, userData);
+    return data;
   },
 
-  updateUserRole: async (id: string, role: string, assignedSiteIds?: string[]): Promise<User> => {
-    const { data } = await api.patch(`/auth/users/${id}/role`, { role, assignedSiteIds })
-    return data
+  updateUserRole: async (
+    id: string,
+    role: string,
+    assignedSiteIds?: string[],
+  ): Promise<User> => {
+    const { data } = await api.patch(`/auth/users/${id}/role`, {
+      role,
+      assignedSiteIds,
+    });
+    return data;
   },
 
   toggleUserActive: async (id: string, isActive: boolean): Promise<User> => {
-    const { data } = await api.patch(`/auth/users/${id}/active`, { isActive })
-    return data
+    const { data } = await api.patch(`/auth/users/${id}/active`, { isActive });
+    return data;
   },
 
   assignSites: async (id: string, siteIds: string[]): Promise<User> => {
-    const { data } = await api.post(`/auth/users/${id}/sites`, { siteIds })
-    return data
+    const { data } = await api.post(`/auth/users/${id}/sites`, { siteIds });
+    return data;
   },
-}
+};
 
 // Supplier API
 export const supplierApi = {
   getAll: async (): Promise<Supplier[]> => {
-    const { data } = await api.get('/suppliers')
-    return data
+    const { data } = await api.get("/suppliers");
+    return data;
   },
 
   getById: async (id: string): Promise<Supplier> => {
-    const { data } = await api.get(`/suppliers/${id}`)
-    return data
+    const { data } = await api.get(`/suppliers/${id}`);
+    return data;
   },
 
   create: async (supplierData: CreateSupplierDto): Promise<Supplier> => {
-    const { data } = await api.post('/suppliers', supplierData)
-    return data
+    const { data } = await api.post("/suppliers", supplierData);
+    return data;
   },
 
-  update: async (id: string, supplierData: Partial<CreateSupplierDto>): Promise<Supplier> => {
-    const { data } = await api.put(`/suppliers/${id}`, supplierData)
-    return data
+  update: async (
+    id: string,
+    supplierData: Partial<CreateSupplierDto>,
+  ): Promise<Supplier> => {
+    const { data } = await api.put(`/suppliers/${id}`, supplierData);
+    return data;
   },
 
   delete: async (id: string): Promise<void> => {
-    await api.delete(`/suppliers/${id}`)
+    await api.delete(`/suppliers/${id}`);
   },
 
   toggleActive: async (id: string, isActive: boolean): Promise<Supplier> => {
-    const { data } = await api.patch(`/suppliers/${id}/active`, { isActive })
-    return data
+    const { data } = await api.patch(`/suppliers/${id}/active`, { isActive });
+    return data;
   },
-}
+};
 
 // Purchase Order API
 export const purchaseOrderApi = {
   getAll: async (params?: {
-    status?: string
-    siteId?: string
-    supplier?: string
-    startDate?: string
-    endDate?: string
-    page?: number
-    limit?: number
+    status?: string;
+    siteId?: string;
+    supplier?: string;
+    startDate?: string;
+    endDate?: string;
+    page?: number;
+    limit?: number;
   }): Promise<{
-    records: PurchaseOrder[]
-    total: number
-    page: number
-    totalPages: number
+    records: PurchaseOrder[];
+    total: number;
+    page: number;
+    totalPages: number;
   }> => {
-    const queryParams = new URLSearchParams()
-    if (params?.status && params.status !== 'all') queryParams.append('status', params.status)
-    if (params?.siteId) queryParams.append('siteId', params.siteId)
-    if (params?.supplier) queryParams.append('supplier', params.supplier)
-    if (params?.startDate) queryParams.append('startDate', params.startDate)
-    if (params?.endDate) queryParams.append('endDate', params.endDate)
-    if (params?.page) queryParams.append('page', params.page.toString())
-    if (params?.limit) queryParams.append('limit', params.limit.toString())
-    
-    const { data } = await api.get(`/purchase-orders?${queryParams.toString()}`)
-    return data
+    const queryParams = new URLSearchParams();
+    if (params?.status && params.status !== "all")
+      queryParams.append("status", params.status);
+    if (params?.siteId) queryParams.append("siteId", params.siteId);
+    if (params?.supplier) queryParams.append("supplier", params.supplier);
+    if (params?.startDate) queryParams.append("startDate", params.startDate);
+    if (params?.endDate) queryParams.append("endDate", params.endDate);
+    if (params?.page) queryParams.append("page", params.page.toString());
+    if (params?.limit) queryParams.append("limit", params.limit.toString());
+
+    const { data } = await api.get(
+      `/purchase-orders?${queryParams.toString()}`,
+    );
+    return data;
   },
 
   getById: async (id: string): Promise<PurchaseOrder> => {
-    const { data } = await api.get(`/purchase-orders/${id}`)
-    return data
+    const { data } = await api.get(`/purchase-orders/${id}`);
+    return data;
   },
 
   create: async (poData: CreatePODto): Promise<PurchaseOrder> => {
-    const { data } = await api.post('/purchase-orders', poData)
-    return data
+    const { data } = await api.post("/purchase-orders", poData);
+    return data;
   },
 
-  update: async (id: string, poData: Partial<CreatePODto>): Promise<PurchaseOrder> => {
-    const { data } = await api.put(`/purchase-orders/${id}`, poData)
-    return data
+  update: async (
+    id: string,
+    poData: Partial<CreatePODto>,
+  ): Promise<PurchaseOrder> => {
+    const { data } = await api.put(`/purchase-orders/${id}`, poData);
+    return data;
   },
 
   delete: async (id: string): Promise<void> => {
-    await api.delete(`/purchase-orders/${id}`)
+    await api.delete(`/purchase-orders/${id}`);
   },
 
   send: async (id: string): Promise<PurchaseOrder> => {
-    const { data } = await api.patch(`/purchase-orders/${id}/send`)
-    return data
+    const { data } = await api.patch(`/purchase-orders/${id}/send`);
+    return data;
   },
 
-  receiveItems: async (id: string, receiveData: ReceiveItemsDto): Promise<PurchaseOrder> => {
-    const { data } = await api.patch(`/purchase-orders/${id}/receive`, receiveData)
-    return data
+  receiveItems: async (
+    id: string,
+    receiveData: ReceiveItemsDto,
+  ): Promise<PurchaseOrder> => {
+    const { data } = await api.patch(
+      `/purchase-orders/${id}/receive`,
+      receiveData,
+    );
+    return data;
   },
 
   complete: async (id: string): Promise<PurchaseOrder> => {
-    const { data } = await api.patch(`/purchase-orders/${id}/complete`)
-    return data
+    const { data } = await api.patch(`/purchase-orders/${id}/complete`);
+    return data;
   },
 
   cancel: async (id: string): Promise<PurchaseOrder> => {
-    const { data } = await api.patch(`/purchase-orders/${id}/cancel`)
-    return data
+    const { data } = await api.patch(`/purchase-orders/${id}/cancel`);
+    return data;
   },
 
   duplicate: async (id: string): Promise<PurchaseOrder> => {
-    const { data } = await api.post(`/purchase-orders/${id}/duplicate`)
-    return data
+    const { data } = await api.post(`/purchase-orders/${id}/duplicate`);
+    return data;
   },
 
   exportToExcel: async (params?: {
-    status?: string
-    startDate?: string
-    endDate?: string
+    status?: string;
+    startDate?: string;
+    endDate?: string;
   }): Promise<Blob> => {
-    const queryParams = new URLSearchParams()
-    if (params?.status && params.status !== 'all') queryParams.append('status', params.status)
-    if (params?.startDate) queryParams.append('startDate', params.startDate)
-    if (params?.endDate) queryParams.append('endDate', params.endDate)
-    
-    const { data } = await api.get(`/purchase-orders/export/excel?${queryParams.toString()}`, {
-      responseType: 'blob',
-    })
-    return data
+    const queryParams = new URLSearchParams();
+    if (params?.status && params.status !== "all")
+      queryParams.append("status", params.status);
+    if (params?.startDate) queryParams.append("startDate", params.startDate);
+    if (params?.endDate) queryParams.append("endDate", params.endDate);
+
+    const { data } = await api.get(
+      `/purchase-orders/export/excel?${queryParams.toString()}`,
+      {
+        responseType: "blob",
+      },
+    );
+    return data;
   },
 
   exportToPDF: async (id: string): Promise<Blob> => {
     const { data } = await api.get(`/purchase-orders/${id}/pdf`, {
-      responseType: 'blob',
-    })
-    return data
+      responseType: "blob",
+    });
+    return data;
   },
 
   getStats: async (): Promise<{
-    total: number
-    byStatus: Record<string, { count: number; value: number }>
-    totalValue: number
-    pendingValue: number
+    total: number;
+    byStatus: Record<string, { count: number; value: number }>;
+    totalValue: number;
+    pendingValue: number;
   }> => {
-    const { data } = await api.get('/purchase-orders/stats/overview')
-    return data
+    const { data } = await api.get("/purchase-orders/stats/overview");
+    return data;
   },
 
   getAgingReport: async (): Promise<{
     overdue: Array<{
-      id: string
-      poNumber: string
-      supplier: any
-      site: string
-      expectedDeliveryDate: string
-      daysOverdue: number
-    }>
+      id: string;
+      poNumber: string;
+      supplier: any;
+      site: string;
+      expectedDeliveryDate: string;
+      daysOverdue: number;
+    }>;
     approaching: Array<{
-      id: string
-      poNumber: string
-      supplier: any
-      site: string
-      expectedDeliveryDate: string
-      daysRemaining: number
-    }>
+      id: string;
+      poNumber: string;
+      supplier: any;
+      site: string;
+      expectedDeliveryDate: string;
+      daysRemaining: number;
+    }>;
   }> => {
-    const { data } = await api.get('/purchase-orders/reports/aging')
-    return data
+    const { data } = await api.get("/purchase-orders/reports/aging");
+    return data;
   },
 
-  getSupplierReport: async (): Promise<Array<{
-    supplierName: string
-    totalPOs: number
-    totalValue: number
-    completedPOs: number
-    cancelledPOs: number
-    completionRate: string
-    avgDeliveryDays: string | null
-  }>> => {
-    const { data } = await api.get('/purchase-orders/reports/suppliers')
-    return data
+  getSupplierReport: async (): Promise<
+    Array<{
+      supplierName: string;
+      totalPOs: number;
+      totalValue: number;
+      completedPOs: number;
+      cancelledPOs: number;
+      completionRate: string;
+      avgDeliveryDays: string | null;
+    }>
+  > => {
+    const { data } = await api.get("/purchase-orders/reports/suppliers");
+    return data;
   },
 
-  getPendingReport: async (): Promise<Array<{
-    id: string
-    poNumber: string
-    supplier: any
-    site: string
-    status: string
-    totalAmount: number
-    itemsPending: number
-    totalItems: number
-    sentDate: string
-    expectedDeliveryDate: string
-  }>> => {
-    const { data } = await api.get('/purchase-orders/reports/pending')
-    return data
+  getPendingReport: async (): Promise<
+    Array<{
+      id: string;
+      poNumber: string;
+      supplier: any;
+      site: string;
+      status: string;
+      totalAmount: number;
+      itemsPending: number;
+      totalItems: number;
+      sentDate: string;
+      expectedDeliveryDate: string;
+    }>
+  > => {
+    const { data } = await api.get("/purchase-orders/reports/pending");
+    return data;
   },
-}
+};
 
 // Delivery Note API
 export const deliveryNoteApi = {
   getAll: async (params?: {
-    page?: number
-    limit?: number
-    poId?: string
-    search?: string
+    page?: number;
+    limit?: number;
+    poId?: string;
+    search?: string;
   }): Promise<{
-    records: DeliveryNote[]
-    total: number
-    page: number
-    totalPages: number
+    records: DeliveryNote[];
+    total: number;
+    page: number;
+    totalPages: number;
   }> => {
-    const queryParams = new URLSearchParams()
-    if (params?.page) queryParams.append('page', params.page.toString())
-    if (params?.limit) queryParams.append('limit', params.limit.toString())
-    if (params?.poId) queryParams.append('poId', params.poId)
-    if (params?.search) queryParams.append('search', params.search)
-    
-    const { data } = await api.get(`/delivery-notes?${queryParams.toString()}`)
-    return data
+    const queryParams = new URLSearchParams();
+    if (params?.page) queryParams.append("page", params.page.toString());
+    if (params?.limit) queryParams.append("limit", params.limit.toString());
+    if (params?.poId) queryParams.append("poId", params.poId);
+    if (params?.search) queryParams.append("search", params.search);
+
+    const { data } = await api.get(`/delivery-notes?${queryParams.toString()}`);
+    return data;
   },
 
   getById: async (id: string): Promise<DeliveryNote> => {
-    const { data } = await api.get(`/delivery-notes/${id}`)
-    return data
+    const { data } = await api.get(`/delivery-notes/${id}`);
+    return data;
   },
 
   getByPO: async (poId: string): Promise<DeliveryNote[]> => {
-    const { data } = await api.get(`/delivery-notes/po/${poId}`)
-    return data
+    const { data } = await api.get(`/delivery-notes/po/${poId}`);
+    return data;
   },
 
   create: async (data: CreateDeliveryNoteDto): Promise<DeliveryNote> => {
-    const { data: response } = await api.post('/delivery-notes', data)
-    return response
+    const { data: response } = await api.post("/delivery-notes", data);
+    return response;
   },
 
   delete: async (id: string): Promise<void> => {
-    await api.delete(`/delivery-notes/${id}`)
+    await api.delete(`/delivery-notes/${id}`);
   },
-}
+};
 
 // Purchase Return API
 export const purchaseReturnApi = {
   getAll: async (params?: {
-    page?: number
-    limit?: number
-    poId?: string
-    search?: string
+    page?: number;
+    limit?: number;
+    poId?: string;
+    search?: string;
   }): Promise<{
-    records: PurchaseReturn[]
-    total: number
-    page: number
-    totalPages: number
+    records: PurchaseReturn[];
+    total: number;
+    page: number;
+    totalPages: number;
   }> => {
-    const queryParams = new URLSearchParams()
-    if (params?.page) queryParams.append('page', params.page.toString())
-    if (params?.limit) queryParams.append('limit', params.limit.toString())
-    if (params?.poId) queryParams.append('poId', params.poId)
-    if (params?.search) queryParams.append('search', params.search)
-    
-    const { data } = await api.get(`/purchase-returns?${queryParams.toString()}`)
-    return data
+    const queryParams = new URLSearchParams();
+    if (params?.page) queryParams.append("page", params.page.toString());
+    if (params?.limit) queryParams.append("limit", params.limit.toString());
+    if (params?.poId) queryParams.append("poId", params.poId);
+    if (params?.search) queryParams.append("search", params.search);
+
+    const { data } = await api.get(
+      `/purchase-returns?${queryParams.toString()}`,
+    );
+    return data;
   },
 
   getById: async (id: string): Promise<PurchaseReturn> => {
-    const { data } = await api.get(`/purchase-returns/${id}`)
-    return data
+    const { data } = await api.get(`/purchase-returns/${id}`);
+    return data;
   },
 
   getByPO: async (poId: string): Promise<PurchaseReturn[]> => {
-    const { data } = await api.get(`/purchase-returns/po/${poId}`)
-    return data
+    const { data } = await api.get(`/purchase-returns/po/${poId}`);
+    return data;
   },
 
   create: async (data: CreatePurchaseReturnDto): Promise<PurchaseReturn> => {
-    const { data: response } = await api.post('/purchase-returns', data)
-    return response
+    const { data: response } = await api.post("/purchase-returns", data);
+    return response;
   },
 
-  updateRefundStatus: async (id: string, refundStatus: string, refundAmount?: number): Promise<PurchaseReturn> => {
-    const { data } = await api.patch(`/purchase-returns/${id}/refund`, { refundStatus, refundAmount })
-    return data
+  updateRefundStatus: async (
+    id: string,
+    refundStatus: string,
+    refundAmount?: number,
+  ): Promise<PurchaseReturn> => {
+    const { data } = await api.patch(`/purchase-returns/${id}/refund`, {
+      refundStatus,
+      refundAmount,
+    });
+    return data;
   },
 
   delete: async (id: string): Promise<void> => {
-    await api.delete(`/purchase-returns/${id}`)
+    await api.delete(`/purchase-returns/${id}`);
   },
-}
+};
+
+// Quotation API
+export const quotationApi = {
+  getAll: async (params?: {
+    page?: number;
+    limit?: number;
+    status?: string;
+    siteId?: string;
+    supplier?: string;
+    startDate?: string;
+    endDate?: string;
+  }): Promise<{
+    records: import("@/types").Quotation[];
+    total: number;
+    page: number;
+    totalPages: number;
+  }> => {
+    const qs = new URLSearchParams();
+    if (params?.page) qs.append("page", params.page.toString());
+    if (params?.limit) qs.append("limit", params.limit.toString());
+    if (params?.status && params.status !== "all")
+      qs.append("status", params.status);
+    if (params?.siteId) qs.append("siteId", params.siteId);
+    if (params?.supplier) qs.append("supplier", params.supplier);
+    if (params?.startDate) qs.append("startDate", params.startDate);
+    if (params?.endDate) qs.append("endDate", params.endDate);
+    const { data } = await api.get(`/quotations?${qs.toString()}`);
+    return data;
+  },
+
+  getById: async (id: string): Promise<import("@/types").Quotation> => {
+    const { data } = await api.get(`/quotations/${id}`);
+    return data;
+  },
+
+  create: async (
+    dto: import("@/types").CreateQuotationDto,
+  ): Promise<import("@/types").Quotation> => {
+    const { data } = await api.post("/quotations", dto);
+    return data;
+  },
+
+  update: async (
+    id: string,
+    dto: Partial<import("@/types").CreateQuotationDto>,
+  ): Promise<import("@/types").Quotation> => {
+    const { data } = await api.put(`/quotations/${id}`, dto);
+    return data;
+  },
+
+  delete: async (id: string): Promise<void> => {
+    await api.delete(`/quotations/${id}`);
+  },
+
+  duplicate: async (id: string): Promise<import("@/types").Quotation> => {
+    const { data } = await api.post(`/quotations/${id}/duplicate`);
+    return data;
+  },
+
+  send: async (id: string): Promise<import("@/types").Quotation> => {
+    const { data } = await api.patch(`/quotations/${id}/send`);
+    return data;
+  },
+
+  accept: async (id: string): Promise<import("@/types").Quotation> => {
+    const { data } = await api.patch(`/quotations/${id}/accept`);
+    return data;
+  },
+
+  reject: async (id: string): Promise<import("@/types").Quotation> => {
+    const { data } = await api.patch(`/quotations/${id}/reject`);
+    return data;
+  },
+
+  convertToPO: async (
+    id: string,
+  ): Promise<{
+    id: string;
+    qtNumber: string;
+    convertedToPO: { id: string; poNumber: string };
+  }> => {
+    const { data } = await api.post(`/quotations/${id}/convert`);
+    return data;
+  },
+};

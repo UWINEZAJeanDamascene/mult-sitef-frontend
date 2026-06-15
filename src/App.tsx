@@ -1,22 +1,22 @@
-import { Routes, Route } from 'react-router-dom'
-import { AuthProvider } from '@/context/AuthContext'
-import { ProtectedRoute } from '@/components/ProtectedRoute'
-import { Layout } from '@/components/Layout'
-import { Login } from '@/pages/Login'
-import { Unauthorized } from '@/pages/Unauthorized'
-import { Profile } from '@/pages/Profile'
-import CompanyProfile from '@/pages/CompanyProfile'
-import { Notifications } from '@/pages/Notifications'
-import LandingPage from '@/pages/LandingPage'
-import { useAuth } from '@/context/AuthContext'
-import { UserRole } from '@/types' 
+import { Routes, Route } from "react-router-dom";
+import { AuthProvider } from "@/context/AuthContext";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { Layout } from "@/components/Layout";
+import { Login } from "@/pages/Login";
+import { Unauthorized } from "@/pages/Unauthorized";
+import { Profile } from "@/pages/Profile";
+import CompanyProfile from "@/pages/CompanyProfile";
+import { Notifications } from "@/pages/Notifications";
+import LandingPage from "@/pages/LandingPage";
+import { useAuth } from "@/context/AuthContext";
+import { UserRole } from "@/types";
 
 // Site Manager Pages
-import { SiteManagerDashboard } from '@/pages/site-manager/Dashboard'
-import { RecordMaterial } from '@/pages/site-manager/RecordMaterial'
-import { ReceivedMaterials } from '@/pages/site-manager/ReceivedMaterials'
-import { UsedMaterials } from '@/pages/site-manager/UsedMaterials'
-import { SiteInventory } from '@/pages/site-manager/SiteInventory'
+import { SiteManagerDashboard } from "@/pages/site-manager/Dashboard";
+import { RecordMaterial } from "@/pages/site-manager/RecordMaterial";
+import { ReceivedMaterials } from "@/pages/site-manager/ReceivedMaterials";
+import { UsedMaterials } from "@/pages/site-manager/UsedMaterials";
+import { SiteInventory } from "@/pages/site-manager/SiteInventory";
 
 // Main Manager Pages
 import {
@@ -42,298 +42,332 @@ import {
   PurchaseReturns,
   PurchaseReturnDetails,
   CreatePurchaseReturn,
-} from '@/pages/main-manager'
+  Quotations,
+  QuotationForm,
+  QuotationDetails,
+} from "@/pages/main-manager";
 
 // Role-based dashboard redirect
 function RoleBasedDashboard() {
-  const { isSiteManager } = useAuth()
-  
+  const { isSiteManager } = useAuth();
+
   if (isSiteManager()) {
-    return <SiteManagerDashboard />
+    return <SiteManagerDashboard />;
   }
-  
-  return <MainManagerDashboard />
+
+  return <MainManagerDashboard />;
 }
 
 function App() {
   return (
     <AuthProvider>
-        <Routes>
-          {/* Public Routes */}
-          <Route path="/" element={<LandingPage />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/unauthorized" element={<Unauthorized />} />
+      <Routes>
+        {/* Public Routes */}
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/unauthorized" element={<Unauthorized />} />
 
-          {/* Protected Routes */}
+        {/* Protected Routes */}
+        <Route
+          element={
+            <ProtectedRoute>
+              <Layout />
+            </ProtectedRoute>
+          }
+        >
+          {/* Dashboard - accessible to both roles */}
           <Route
+            path="/dashboard"
             element={
               <ProtectedRoute>
-                <Layout />
+                <RoleBasedDashboard />
               </ProtectedRoute>
             }
-          >
-            {/* Dashboard - accessible to both roles */}
-            <Route
-              path="/dashboard"
-              element={
-                <ProtectedRoute>
-                  <RoleBasedDashboard />
-                </ProtectedRoute>
-              }
-            />
+          />
 
-            {/* Site Manager Routes */}
-            <Route
-              path="/site-dashboard"
-              element={
-                <ProtectedRoute requiredRole={UserRole.SITE_MANAGER}>
-                  <SiteManagerDashboard />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/received"
-              element={
-                <ProtectedRoute requiredRole={UserRole.SITE_MANAGER}>
-                  <ReceivedMaterials />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/inventory"
-              element={
-                <ProtectedRoute requiredRole={UserRole.SITE_MANAGER}>
-                  <SiteInventory />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/used"
-              element={
-                <ProtectedRoute requiredRole={UserRole.SITE_MANAGER}>
-                  <UsedMaterials />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/record"
-              element={
-                <ProtectedRoute requiredRole={UserRole.SITE_MANAGER}>
-                  <RecordMaterial />
-                </ProtectedRoute>
-              }
-            />
+          {/* Site Manager Routes */}
+          <Route
+            path="/site-dashboard"
+            element={
+              <ProtectedRoute requiredRole={UserRole.SITE_MANAGER}>
+                <SiteManagerDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/received"
+            element={
+              <ProtectedRoute requiredRole={UserRole.SITE_MANAGER}>
+                <ReceivedMaterials />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/inventory"
+            element={
+              <ProtectedRoute requiredRole={UserRole.SITE_MANAGER}>
+                <SiteInventory />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/used"
+            element={
+              <ProtectedRoute requiredRole={UserRole.SITE_MANAGER}>
+                <UsedMaterials />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/record"
+            element={
+              <ProtectedRoute requiredRole={UserRole.SITE_MANAGER}>
+                <RecordMaterial />
+              </ProtectedRoute>
+            }
+          />
 
-            {/* Profile Route - accessible to all authenticated users */}
-            <Route
-              path="/profile"
-              element={
-                <ProtectedRoute>
-                  <Profile />
-                </ProtectedRoute>
-              }
-            />
+          {/* Profile Route - accessible to all authenticated users */}
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <Profile />
+              </ProtectedRoute>
+            }
+          />
 
-            {/* Company Profile Route - accessible to managers */}
-            <Route
-              path="/company-profile"
-              element={
-                <ProtectedRoute requiredRole={UserRole.MAIN_MANAGER}>
-                  <CompanyProfile />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/notifications"
-              element={
-                <ProtectedRoute>
-                  <Notifications />
-                </ProtectedRoute>
-              }
-            />
+          {/* Company Profile Route - accessible to managers */}
+          <Route
+            path="/company-profile"
+            element={
+              <ProtectedRoute requiredRole={UserRole.MAIN_MANAGER}>
+                <CompanyProfile />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/notifications"
+            element={
+              <ProtectedRoute>
+                <Notifications />
+              </ProtectedRoute>
+            }
+          />
 
-            {/* Main Manager Routes */}
-            <Route
-              path="/sites"
-              element={
-                <ProtectedRoute requiredRole={UserRole.MAIN_MANAGER}>
-                  <SitesOverview />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/sites/:id"
-              element={
-                <ProtectedRoute requiredRole={UserRole.MAIN_MANAGER}>
-                  <SiteDetails />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/main-stock"
-              element={
-                <ProtectedRoute requiredRole={UserRole.MAIN_MANAGER}>
-                  <MainStockRecords />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/used-materials"
-              element={
-                <ProtectedRoute requiredRole={UserRole.MAIN_MANAGER}>
-                  <UsedMaterialsView />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/remaining-materials"
-              element={
-                <ProtectedRoute requiredRole={UserRole.MAIN_MANAGER}>
-                  <RemainingMaterialsView />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/sites-management"
-              element={
-                <ProtectedRoute requiredRole={UserRole.MAIN_MANAGER}>
-                  <SitesManagement />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/materials"
-              element={
-                <ProtectedRoute requiredRole={UserRole.MAIN_MANAGER}>
-                  <MaterialsCatalog />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/users"
-              element={
-                <ProtectedRoute requiredRole={UserRole.MAIN_MANAGER}>
-                  <UsersManagement />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/action-logs"
-              element={
-                <ProtectedRoute requiredRole={UserRole.MAIN_MANAGER}>
-                  <ActionLogs />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/purchase-orders"
-              element={
-                <ProtectedRoute requiredRole={UserRole.MAIN_MANAGER}>
-                  <PurchaseOrders />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/purchase-orders/new"
-              element={
-                <ProtectedRoute requiredRole={UserRole.MAIN_MANAGER}>
-                  <PurchaseOrderForm />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/purchase-orders/:id"
-              element={
-                <ProtectedRoute requiredRole={UserRole.MAIN_MANAGER}>
-                  <PurchaseOrderDetails />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/purchase-orders/:id/edit"
-              element={
-                <ProtectedRoute requiredRole={UserRole.MAIN_MANAGER}>
-                  <PurchaseOrderForm />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/purchase-orders/reports"
-              element={
-                <ProtectedRoute requiredRole={UserRole.MAIN_MANAGER}>
-                  <PurchaseOrderReports />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/suppliers"
-              element={
-                <ProtectedRoute requiredRole={UserRole.MAIN_MANAGER}>
-                  <Suppliers />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/suppliers/:id"
-              element={
-                <ProtectedRoute requiredRole={UserRole.MAIN_MANAGER}>
-                  <SupplierDetails />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/delivery-notes"
-              element={
-                <ProtectedRoute requiredRole={UserRole.MAIN_MANAGER}>
-                  <DeliveryNotes />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/delivery-notes/:id"
-              element={
-                <ProtectedRoute requiredRole={UserRole.MAIN_MANAGER}>
-                  <DeliveryNoteDetails />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/purchase-orders/:poId/create-dn"
-              element={
-                <ProtectedRoute requiredRole={UserRole.MAIN_MANAGER}>
-                  <CreateDeliveryNote />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/purchase-returns"
-              element={
-                <ProtectedRoute requiredRole={UserRole.MAIN_MANAGER}>
-                  <PurchaseReturns />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/purchase-returns/:id"
-              element={
-                <ProtectedRoute requiredRole={UserRole.MAIN_MANAGER}>
-                  <PurchaseReturnDetails />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/purchase-orders/:poId/create-return"
-              element={
-                <ProtectedRoute requiredRole={UserRole.MAIN_MANAGER}>
-                  <CreatePurchaseReturn />
-                </ProtectedRoute>
-              }
-            />
-
-          </Route>
-        </Routes>
-      </AuthProvider>
-  )
+          {/* Main Manager Routes */}
+          <Route
+            path="/sites"
+            element={
+              <ProtectedRoute requiredRole={UserRole.MAIN_MANAGER}>
+                <SitesOverview />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/sites/:id"
+            element={
+              <ProtectedRoute requiredRole={UserRole.MAIN_MANAGER}>
+                <SiteDetails />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/main-stock"
+            element={
+              <ProtectedRoute requiredRole={UserRole.MAIN_MANAGER}>
+                <MainStockRecords />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/used-materials"
+            element={
+              <ProtectedRoute requiredRole={UserRole.MAIN_MANAGER}>
+                <UsedMaterialsView />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/remaining-materials"
+            element={
+              <ProtectedRoute requiredRole={UserRole.MAIN_MANAGER}>
+                <RemainingMaterialsView />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/sites-management"
+            element={
+              <ProtectedRoute requiredRole={UserRole.MAIN_MANAGER}>
+                <SitesManagement />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/materials"
+            element={
+              <ProtectedRoute requiredRole={UserRole.MAIN_MANAGER}>
+                <MaterialsCatalog />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/users"
+            element={
+              <ProtectedRoute requiredRole={UserRole.MAIN_MANAGER}>
+                <UsersManagement />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/action-logs"
+            element={
+              <ProtectedRoute requiredRole={UserRole.MAIN_MANAGER}>
+                <ActionLogs />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/purchase-orders"
+            element={
+              <ProtectedRoute requiredRole={UserRole.MAIN_MANAGER}>
+                <PurchaseOrders />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/purchase-orders/new"
+            element={
+              <ProtectedRoute requiredRole={UserRole.MAIN_MANAGER}>
+                <PurchaseOrderForm />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/purchase-orders/:id"
+            element={
+              <ProtectedRoute requiredRole={UserRole.MAIN_MANAGER}>
+                <PurchaseOrderDetails />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/purchase-orders/:id/edit"
+            element={
+              <ProtectedRoute requiredRole={UserRole.MAIN_MANAGER}>
+                <PurchaseOrderForm />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/purchase-orders/reports"
+            element={
+              <ProtectedRoute requiredRole={UserRole.MAIN_MANAGER}>
+                <PurchaseOrderReports />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/suppliers"
+            element={
+              <ProtectedRoute requiredRole={UserRole.MAIN_MANAGER}>
+                <Suppliers />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/suppliers/:id"
+            element={
+              <ProtectedRoute requiredRole={UserRole.MAIN_MANAGER}>
+                <SupplierDetails />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/delivery-notes"
+            element={
+              <ProtectedRoute requiredRole={UserRole.MAIN_MANAGER}>
+                <DeliveryNotes />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/delivery-notes/:id"
+            element={
+              <ProtectedRoute requiredRole={UserRole.MAIN_MANAGER}>
+                <DeliveryNoteDetails />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/purchase-orders/:poId/create-dn"
+            element={
+              <ProtectedRoute requiredRole={UserRole.MAIN_MANAGER}>
+                <CreateDeliveryNote />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/purchase-returns"
+            element={
+              <ProtectedRoute requiredRole={UserRole.MAIN_MANAGER}>
+                <PurchaseReturns />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/purchase-returns/:id"
+            element={
+              <ProtectedRoute requiredRole={UserRole.MAIN_MANAGER}>
+                <PurchaseReturnDetails />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/purchase-orders/:poId/create-return"
+            element={
+              <ProtectedRoute requiredRole={UserRole.MAIN_MANAGER}>
+                <CreatePurchaseReturn />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/quotations"
+            element={
+              <ProtectedRoute requiredRole={UserRole.MAIN_MANAGER}>
+                <Quotations />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/quotations/new"
+            element={
+              <ProtectedRoute requiredRole={UserRole.MAIN_MANAGER}>
+                <QuotationForm />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/quotations/:id"
+            element={
+              <ProtectedRoute requiredRole={UserRole.MAIN_MANAGER}>
+                <QuotationDetails />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/quotations/:id/edit"
+            element={
+              <ProtectedRoute requiredRole={UserRole.MAIN_MANAGER}>
+                <QuotationForm />
+              </ProtectedRoute>
+            }
+          />
+        </Route>
+      </Routes>
+    </AuthProvider>
+  );
 }
 
-export default App
+export default App;

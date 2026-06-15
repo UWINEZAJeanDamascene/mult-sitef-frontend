@@ -1,8 +1,8 @@
 export enum UserRole {
-  SITE_MANAGER = 'site_manager',
-  MAIN_MANAGER = 'main_manager',
-  ACCOUNTANT = 'accountant',
-  MANAGER = 'manager',
+  SITE_MANAGER = "site_manager",
+  MAIN_MANAGER = "main_manager",
+  ACCOUNTANT = "accountant",
+  MANAGER = "manager",
 }
 
 export interface User {
@@ -107,7 +107,7 @@ export interface SiteRecord {
 
 export interface MainStockRecord {
   _id: string;
-  source: 'site' | 'direct';
+  source: "site" | "direct";
   site_id?: string;
   siteRecord_id?: string;
   material_id?: string;
@@ -117,7 +117,7 @@ export interface MainStockRecord {
   price?: number | null;
   totalValue?: number | null;
   date: string;
-  status: 'pending_price' | 'priced' | 'direct';
+  status: "pending_price" | "priced" | "direct";
   notes?: string;
   recordedBy: string;
   company_id: string;
@@ -142,7 +142,7 @@ export interface UsedMaterialsView {
 export interface StockMovement {
   _id: string;
   mainStock_id: string;
-  type: 'received' | 'used' | 'price_update';
+  type: "received" | "used" | "price_update";
   quantity?: number;
   previousPrice?: number;
   newPrice?: number;
@@ -178,7 +178,7 @@ export {
   type ActionLog,
   type ActionLogStats,
   type ActionLogsFilter,
-} from './actionLog'
+} from "./actionLog";
 
 // Supplier Type
 export interface Supplier {
@@ -231,7 +231,7 @@ export interface PurchaseOrder {
     name: string;
     location?: string;
   };
-  status: 'draft' | 'sent' | 'partial' | 'received' | 'completed' | 'cancelled';
+  status: "draft" | "sent" | "partial" | "received" | "completed" | "cancelled";
   items: POItem[];
   subTotal: number;
   taxRate: number;
@@ -255,7 +255,7 @@ export interface DeliveryNoteItem {
   unit: string;
   unitPrice: number;
   totalPrice?: number;
-  condition?: 'good' | 'damaged' | 'partial';
+  condition?: "good" | "damaged" | "partial";
   notes?: string;
 }
 
@@ -281,7 +281,7 @@ export interface DeliveryNote {
   receivedByName?: string;
   carrier?: string;
   trackingNumber?: string;
-  condition: 'good' | 'damaged' | 'partial';
+  condition: "good" | "damaged" | "partial";
   notes?: string;
   attachments?: string[];
   subTotal?: number;
@@ -302,13 +302,13 @@ export interface CreateDeliveryNoteDto {
     quantityDelivered: number;
     unit: string;
     unitPrice: number;
-    condition?: 'good' | 'damaged' | 'partial';
+    condition?: "good" | "damaged" | "partial";
     notes?: string;
   }[];
   deliveryDate: string;
   carrier?: string;
   trackingNumber?: string;
-  condition: 'good' | 'damaged' | 'partial';
+  condition: "good" | "damaged" | "partial";
   notes?: string;
   attachments?: string[];
 }
@@ -320,7 +320,7 @@ export interface PurchaseReturnItem {
   quantityReturned: number;
   unit: string;
   unitPrice: number;
-  reason: 'defective' | 'wrong_item' | 'overage' | 'other';
+  reason: "defective" | "wrong_item" | "overage" | "other";
   notes?: string;
 }
 
@@ -346,8 +346,8 @@ export interface PurchaseReturn {
   returnedByName?: string;
   carrier?: string;
   trackingNumber?: string;
-  condition: 'good' | 'damaged' | 'partial';
-  refundStatus: 'pending' | 'processed' | 'refunded';
+  condition: "good" | "damaged" | "partial";
+  refundStatus: "pending" | "processed" | "refunded";
   refundAmount?: number;
   notes?: string;
   attachments?: string[];
@@ -364,13 +364,13 @@ export interface CreatePurchaseReturnDto {
     quantityReturned: number;
     unit: string;
     unitPrice: number;
-    reason: 'defective' | 'wrong_item' | 'overage' | 'other';
+    reason: "defective" | "wrong_item" | "overage" | "other";
     notes?: string;
   }[];
   returnDate: string;
   carrier?: string;
   trackingNumber?: string;
-  condition: 'good' | 'damaged' | 'partial';
+  condition: "good" | "damaged" | "partial";
   notes?: string;
   attachments?: string[];
 }
@@ -384,7 +384,7 @@ export interface CreatePODto {
     address?: string;
   };
   site_id: string;
-  items: Omit<POItem, '_id' | 'quantityReceived' | 'totalPrice'>[];
+  items: Omit<POItem, "_id" | "quantityReceived" | "totalPrice">[];
   taxRate?: number;
   notes?: string;
   terms?: string;
@@ -398,4 +398,72 @@ export interface ReceiveItemsDto {
   }[];
   date?: string;
   notes?: string;
+}
+
+// Quotation Types
+export interface QuotationItem {
+  _id?: string;
+  materialName: string;
+  material_id?: string;
+  description?: string;
+  quantityRequested: number;
+  unitPrice: number;
+  totalPrice: number;
+  unit: string;
+  notes?: string;
+}
+
+export interface Quotation {
+  id: string;
+  qtNumber: string;
+  supplier: {
+    name: string;
+    contactPerson?: string;
+    email?: string;
+    phone?: string;
+    address?: string;
+  };
+  site?: {
+    _id: string;
+    name: string;
+    location?: string;
+  } | null;
+  status: "draft" | "sent" | "accepted" | "rejected" | "expired";
+  items: QuotationItem[];
+  subTotal: number;
+  taxRate: number;
+  taxAmount: number;
+  totalAmount: number;
+  validUntil?: string | null;
+  notes?: string;
+  terms?: string;
+  sentDate?: string | null;
+  convertedToPO?: string | null;
+  createdBy?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateQuotationDto {
+  supplier: {
+    name: string;
+    contactPerson?: string;
+    email?: string;
+    phone?: string;
+    address?: string;
+  };
+  site_id?: string;
+  items: {
+    materialName: string;
+    material_id?: string;
+    description?: string;
+    quantityRequested: number;
+    unitPrice: number;
+    unit: string;
+    notes?: string;
+  }[];
+  taxRate?: number;
+  validUntil?: string;
+  notes?: string;
+  terms?: string;
 }
