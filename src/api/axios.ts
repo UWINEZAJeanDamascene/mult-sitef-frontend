@@ -4,7 +4,7 @@ import type { JwtPayload } from '@/types'
 
 const API_URL =
   import.meta.env.VITE_API_URL ||
-  (import.meta.env.MODE === 'development' ? '/api' : 'https://mult-site-backend.onrender.com')
+  (import.meta.env.MODE === 'development' ? '/api' : 'https://mult-site-stock.onrender.com')
 
 // Note: authentication is cookie-based (httpOnly cookie set by backend)
 // Axios should send cookies with requests
