@@ -28,6 +28,7 @@ import {
 import { purchaseOrderApi } from '@/api/mainManager'
 import { format, cn } from '@/lib/utils'
 import { useAuth } from '@/context/AuthContext'
+import toast from 'react-hot-toast'
 import type { POItem } from '@/types'
 
 const statusConfig = {
@@ -170,6 +171,28 @@ export function PurchaseOrderDetails() {
     enabled: !!id,
   })
 
+  const openPurchaseOrderPdfWindow = async () => {
+    if (!id) {
+      toast.error('Purchase order ID is missing')
+      return
+    }
+
+    const printWindow = window.open('', '_blank', 'noopener,noreferrer')
+    if (!printWindow) {
+      toast.error('Popup blocked. Allow popups and try again.')
+      return
+    }
+
+    try {
+      const blob = await purchaseOrderApi.exportToPDF(id)
+      const url = window.URL.createObjectURL(blob)
+      printWindow.location.href = url
+    } catch (err: any) {
+      printWindow.close()
+      toast.error(err?.response?.data?.error || 'Failed to load purchase order PDF')
+    }
+  }
+
   const sendMutation = useMutation({
     mutationFn: () => purchaseOrderApi.send(id!),
     onSuccess: () => {
@@ -287,13 +310,7 @@ export function PurchaseOrderDetails() {
         <div className="flex items-center gap-2">
           {/* Print/PDF Button - Always Available */}
           <button
-            onClick={() => {
-              const apiBaseUrl = import.meta.env.VITE_API_URL || "";
-              const url = apiBaseUrl
-                ? `${apiBaseUrl.replace(/\/+$/, "")}/api/purchase-orders/${po.id}/pdf`
-                : `/api/purchase-orders/${po.id}/pdf`;
-              window.open(url, '_blank');
-            }}
+            onClick={openPurchaseOrderPdfWindow}
             className="flex items-center gap-2 px-4 py-2 border border-input rounded-lg hover:bg-muted transition-colors"
           >
             <Printer className="w-4 h-4" />

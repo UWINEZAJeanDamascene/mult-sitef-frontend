@@ -455,13 +455,24 @@ export interface QuotationItem {
 export interface Quotation {
   id: string;
   qtNumber: string;
-  supplier: {
+  client?: {
+    id?: string;
     name: string;
     contactPerson?: string;
     email?: string;
     phone?: string;
     address?: string;
-  };
+    taxId?: string;
+    notes?: string;
+  } | null;
+  supplier?: {
+    name?: string;
+    contactPerson?: string;
+    email?: string;
+    phone?: string;
+    address?: string;
+  } | null;
+  client_id?: string;
   site?: {
     _id: string;
     name: string;
@@ -484,8 +495,9 @@ export interface Quotation {
 }
 
 export interface CreateQuotationDto {
-  supplier: {
-    name: string;
+  client_id: string;
+  supplier?: {
+    name?: string;
     contactPerson?: string;
     email?: string;
     phone?: string;

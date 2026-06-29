@@ -685,6 +685,8 @@ export const quotationApi = {
     status?: string;
     siteId?: string;
     supplier?: string;
+    client?: string;
+    clientId?: string;
     startDate?: string;
     endDate?: string;
   }): Promise<{
@@ -700,6 +702,8 @@ export const quotationApi = {
       qs.append("status", params.status);
     if (params?.siteId) qs.append("siteId", params.siteId);
     if (params?.supplier) qs.append("supplier", params.supplier);
+    if (params?.client) qs.append("client", params.client);
+    if (params?.clientId) qs.append("clientId", params.clientId);
     if (params?.startDate) qs.append("startDate", params.startDate);
     if (params?.endDate) qs.append("endDate", params.endDate);
     const { data } = await api.get(`/quotations?${qs.toString()}`);

@@ -12,7 +12,7 @@ import {
 import {
   quotationApi,
   sitesManagerApi,
-  supplierApi,
+  clientApi,
   materialsCatalogApi,
 } from "@/api/mainManager";
 import { format, cn } from "@/lib/utils";
@@ -48,13 +48,16 @@ export function QuotationForm() {
   const isEditing = !!id;
 
   // Form state
-  const [supplierName, setSupplierName] = useState("");
-  const [supplierContact, setSupplierContact] = useState("");
-  const [supplierEmail, setSupplierEmail] = useState("");
-  const [supplierPhone, setSupplierPhone] = useState("");
-  const [supplierAddress, setSupplierAddress] = useState("");
-  const [supplierSearch, setSupplierSearch] = useState("");
-  const [showSupplierDropdown, setShowSupplierDropdown] = useState(false);
+  const [clientId, setClientId] = useState("");
+  const [clientName, setClientName] = useState("");
+  const [clientContact, setClientContact] = useState("");
+  const [clientEmail, setClientEmail] = useState("");
+  const [clientPhone, setClientPhone] = useState("");
+  const [clientAddress, setClientAddress] = useState("");
+  const [clientTaxId, setClientTaxId] = useState("");
+  const [clientNotes, setClientNotes] = useState("");
+  const [clientSearch, setClientSearch] = useState("");
+  const [showClientDropdown, setShowClientDropdown] = useState(false);
   const [siteId, setSiteId] = useState("");
   const [taxRate, setTaxRate] = useState(0);
   const [validUntil, setValidUntil] = useState("");
@@ -76,11 +79,14 @@ export function QuotationForm() {
   // Load existing data into form
   useEffect(() => {
     if (existing) {
-      setSupplierName(existing.supplier.name || "");
-      setSupplierContact(existing.supplier.contactPerson || "");
-      setSupplierEmail(existing.supplier.email || "");
-      setSupplierPhone(existing.supplier.phone || "");
-      setSupplierAddress(existing.supplier.address || "");
+        setClientId(existing.client_id || "");
+      setClientName(existing.client?.name || "");
+      setClientContact(existing.client?.contactPerson || "");
+      setClientEmail(existing.client?.email || "");
+      setClientPhone(existing.client?.phone || "");
+      setClientAddress(existing.client?.address || "");
+      setClientTaxId(existing.client?.taxId || "");
+      setClientNotes(existing.client?.notes || "");
       setSiteId(existing.site?._id || "");
       setTaxRate(existing.taxRate || 0);
       setValidUntil(
@@ -105,9 +111,9 @@ export function QuotationForm() {
   }, [existing]);
 
   // Fetch reference data
-  const { data: suppliers } = useQuery({
-    queryKey: ["suppliers"],
-    queryFn: supplierApi.getAll,
+  const { data: clients } = useQuery({
+    queryKey: ["clients"],
+    queryFn: clientApi.getAll,
   });
   const { data: sites } = useQuery({
     queryKey: ["all-sites"],
@@ -118,11 +124,11 @@ export function QuotationForm() {
     queryFn: materialsCatalogApi.getMaterials,
   });
 
-  const filteredSuppliers =
-    suppliers?.filter(
-      (s) =>
-        s.name.toLowerCase().includes(supplierSearch.toLowerCase()) &&
-        s.isActive,
+  const filteredClients =
+    clients?.filter(
+      (c) =>
+        c.name.toLowerCase().includes(clientSearch.toLowerCase()) &&
+        c.isActive,
     ) || [];
 
   const createMutation = useMutation({
@@ -130,6 +136,9 @@ export function QuotationForm() {
     onSuccess: (data) => {
       toast.success("Quotation created successfully");
       queryClient.invalidateQueries({ queryKey: ["quotations"] });
+      if (clientId) {
+        queryClient.invalidateQueries({ queryKey: ["client-quotations", clientId] });
+      }
       navigate(`/quotations/${data.id}`);
     },
     onError: (err: any) =>
@@ -148,6 +157,9 @@ export function QuotationForm() {
       toast.success("Quotation updated successfully");
       queryClient.invalidateQueries({ queryKey: ["quotations"] });
       queryClient.invalidateQueries({ queryKey: ["quotation", id] });
+      if (clientId) {
+        queryClient.invalidateQueries({ queryKey: ["client-quotations", clientId] });
+      }
       navigate(`/quotations/${id}`);
     },
     onError: (err: any) =>
@@ -189,14 +201,17 @@ export function QuotationForm() {
     setShowMaterialDropdown((p) => p.filter((_, i) => i !== index));
   };
 
-  const selectSupplier = (s: any) => {
-    setSupplierName(s.name);
-    setSupplierContact(s.contactPerson || "");
-    setSupplierEmail(s.email || "");
-    setSupplierPhone(s.phone || "");
-    setSupplierAddress(s.address || "");
-    setSupplierSearch("");
-    setShowSupplierDropdown(false);
+  const selectClient = (c: any) => {
+    setClientId(c.id);
+    setClientName(c.name);
+    setClientContact(c.contactPerson || "");
+    setClientEmail(c.email || "");
+    setClientPhone(c.phone || "");
+    setClientAddress(c.address || "");
+    setClientTaxId(c.taxId || "");
+    setClientNotes(c.notes || "");
+    setClientSearch("");
+    setShowClientDropdown(false);
   };
 
   const selectMaterial = (index: number, mat: any) => {
@@ -217,8 +232,8 @@ export function QuotationForm() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!supplierName.trim()) {
-      toast.error("Supplier name is required");
+    if (!clientId) {
+      toast.error("Client selection is required");
       return;
     }
     if (items.some((it) => !it.materialName.trim())) {
@@ -227,13 +242,7 @@ export function QuotationForm() {
     }
 
     const dto: CreateQuotationDto = {
-      supplier: {
-        name: supplierName,
-        contactPerson: supplierContact || undefined,
-        email: supplierEmail || undefined,
-        phone: supplierPhone || undefined,
-        address: supplierAddress || undefined,
-      },
+      client_id: clientId,
       site_id: siteId || undefined,
       items: items.map((it) => ({
         materialName: it.materialName,
@@ -283,7 +292,7 @@ export function QuotationForm() {
           <p className="text-muted-foreground text-sm mt-0.5">
             {isEditing
               ? "Update quotation details"
-              : "Create a quotation to send to a supplier"}
+              : "Create a quotation for the selected client"}
           </p>
         </div>
       </div>
@@ -291,45 +300,44 @@ export function QuotationForm() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left column */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Supplier */}
+          {/* Client */}
           <div className="bg-card rounded-xl border border-border p-6 shadow-sm space-y-4">
-            <h2 className="font-semibold text-foreground">Supplier Details</h2>
+            <h2 className="font-semibold text-foreground">Client Details</h2>
 
-            {/* Supplier search from catalog */}
             <div className="relative">
               <label className="block text-sm font-medium text-foreground mb-1">
-                Pick from catalog
+                Pick client from catalog
               </label>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <input
                   type="text"
-                  value={supplierSearch}
-                  onFocus={() => setShowSupplierDropdown(true)}
+                  value={clientSearch}
+                  onFocus={() => setShowClientDropdown(true)}
                   onChange={(e) => {
-                    setSupplierSearch(e.target.value);
-                    setShowSupplierDropdown(true);
+                    setClientSearch(e.target.value);
+                    setShowClientDropdown(true);
                   }}
                   onBlur={() =>
-                    setTimeout(() => setShowSupplierDropdown(false), 200)
+                    setTimeout(() => setShowClientDropdown(false), 200)
                   }
-                  placeholder="Search suppliers..."
+                  placeholder="Search clients..."
                   className="w-full pl-10 pr-4 py-2 border border-input rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary text-sm"
                 />
               </div>
-              {showSupplierDropdown && filteredSuppliers.length > 0 && (
+              {showClientDropdown && filteredClients.length > 0 && (
                 <div className="absolute z-10 w-full mt-1 bg-card border border-border rounded-lg shadow-lg max-h-48 overflow-y-auto">
-                  {filteredSuppliers.map((s) => (
+                  {filteredClients.map((c) => (
                     <button
-                      key={s.id}
+                      key={c.id}
                       type="button"
-                      onMouseDown={() => selectSupplier(s)}
+                      onMouseDown={() => selectClient(c)}
                       className="w-full text-left px-4 py-2 hover:bg-muted text-sm text-foreground"
                     >
-                      {s.name}
-                      {s.contactPerson && (
+                      {c.name}
+                      {c.contactPerson && (
                         <span className="text-muted-foreground ml-2">
-                          · {s.contactPerson}
+                          · {c.contactPerson}
                         </span>
                       )}
                     </button>
@@ -341,14 +349,13 @@ export function QuotationForm() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="sm:col-span-2">
                 <label className="block text-sm font-medium text-foreground mb-1">
-                  Supplier Name <span className="text-destructive">*</span>
+                  Client Name <span className="text-destructive">*</span>
                 </label>
                 <input
                   type="text"
-                  value={supplierName}
-                  onChange={(e) => setSupplierName(e.target.value)}
-                  required
+                  value={clientName}
                   className="w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary text-sm"
+                  readOnly
                 />
               </div>
               <div>
@@ -357,9 +364,9 @@ export function QuotationForm() {
                 </label>
                 <input
                   type="text"
-                  value={supplierContact}
-                  onChange={(e) => setSupplierContact(e.target.value)}
+                  value={clientContact}
                   className="w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary text-sm"
+                  readOnly
                 />
               </div>
               <div>
@@ -368,9 +375,9 @@ export function QuotationForm() {
                 </label>
                 <input
                   type="email"
-                  value={supplierEmail}
-                  onChange={(e) => setSupplierEmail(e.target.value)}
+                  value={clientEmail}
                   className="w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary text-sm"
+                  readOnly
                 />
               </div>
               <div>
@@ -379,20 +386,42 @@ export function QuotationForm() {
                 </label>
                 <input
                   type="text"
-                  value={supplierPhone}
-                  onChange={(e) => setSupplierPhone(e.target.value)}
+                  value={clientPhone}
                   className="w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary text-sm"
+                  readOnly
                 />
               </div>
-              <div>
+              <div className="sm:col-span-2">
                 <label className="block text-sm font-medium text-foreground mb-1">
                   Address
                 </label>
                 <input
                   type="text"
-                  value={supplierAddress}
-                  onChange={(e) => setSupplierAddress(e.target.value)}
+                  value={clientAddress}
                   className="w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary text-sm"
+                  readOnly
+                />
+              </div>
+              <div className="sm:col-span-2">
+                <label className="block text-sm font-medium text-foreground mb-1">
+                  Tax ID
+                </label>
+                <input
+                  type="text"
+                  value={clientTaxId}
+                  className="w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary text-sm"
+                  readOnly
+                />
+              </div>
+              <div className="sm:col-span-2">
+                <label className="block text-sm font-medium text-foreground mb-1">
+                  Notes
+                </label>
+                <textarea
+                  value={clientNotes}
+                  className="w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary text-sm resize-none"
+                  rows={3}
+                  readOnly
                 />
               </div>
             </div>

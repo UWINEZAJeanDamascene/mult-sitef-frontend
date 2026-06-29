@@ -80,6 +80,9 @@ export function QuotationDetails() {
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: ["quotation", id] });
     queryClient.invalidateQueries({ queryKey: ["quotations"] });
+    if (qt?.client_id) {
+      queryClient.invalidateQueries({ queryKey: ["client-quotations", qt.client_id] });
+    }
   };
 
   const sendMutation = useMutation({
@@ -140,21 +143,25 @@ export function QuotationDetails() {
     onError: () => toast.error("Failed to delete quotation"),
   });
 
-  const buildApiUrl = (path: string) => {
-    const apiBaseUrl = import.meta.env.VITE_API_URL || "";
-    return apiBaseUrl ? `${apiBaseUrl.replace(/\/+$/, "")}${path}` : path;
-  };
-
-  const openQuotationPdfWindow = () => {
+  const openQuotationPdfWindow = (download = false) => async () => {
     if (!id) {
       toast.error("Quotation ID is missing");
       return;
     }
 
-    const url = buildApiUrl(`/api/quotations/${id}/pdf`);
-    const printWindow = window.open(url, "_blank", "noopener,noreferrer");
+    const printWindow = window.open("", "_blank", "noopener,noreferrer");
     if (!printWindow) {
       toast.error("Popup blocked. Allow popups and try again.");
+      return;
+    }
+
+    try {
+      const blob = await quotationApi.exportToPDF(id, download);
+      const url = window.URL.createObjectURL(blob);
+      printWindow.location.href = url;
+    } catch (err: any) {
+      printWindow.close();
+      toast.error(err?.response?.data?.error || "Failed to load quotation PDF");
     }
   };
 
@@ -231,7 +238,7 @@ export function QuotationDetails() {
         {/* Action buttons */}
         <div className="flex flex-wrap items-center gap-2">
           <button
-            onClick={openQuotationPdfWindow}
+            onClick={openQuotationPdfWindow()}
             disabled={isAnyPending}
             className="flex items-center gap-1.5 px-3 py-2 border border-border rounded-lg text-sm hover:bg-muted transition-colors text-foreground disabled:opacity-50"
           >
@@ -239,7 +246,7 @@ export function QuotationDetails() {
             Print
           </button>
           <button
-            onClick={openQuotationPdfWindow}
+            onClick={openQuotationPdfWindow(true)}
             disabled={isAnyPending}
             className="flex items-center gap-1.5 px-3 py-2 border border-border rounded-lg text-sm hover:bg-muted transition-colors text-foreground disabled:opacity-50"
           >
@@ -396,31 +403,47 @@ export function QuotationDetails() {
         <div className="lg:col-span-2 space-y-6">
           {/* Supplier */}
           <div className="bg-card rounded-xl border border-border p-6 shadow-sm">
-            <h2 className="font-semibold text-foreground mb-4">Supplier</h2>
+            <h2 className="font-semibold text-foreground mb-4">Client</h2>
             <div className="space-y-2 text-sm">
               <p className="text-lg font-semibold text-foreground">
-                {qt.supplier.name}
+                {qt.client?.name || qt.supplier?.name}
               </p>
-              {qt.supplier.contactPerson && (
+              {qt.client?.contactPerson ? (
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <User className="w-4 h-4" /> {qt.client.contactPerson}
+                </div>
+              ) : qt.supplier?.contactPerson ? (
                 <div className="flex items-center gap-2 text-muted-foreground">
                   <User className="w-4 h-4" /> {qt.supplier.contactPerson}
                 </div>
-              )}
-              {qt.supplier.email && (
+              ) : null}
+              {qt.client?.email ? (
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <Mail className="w-4 h-4" /> {qt.client.email}
+                </div>
+              ) : qt.supplier?.email ? (
                 <div className="flex items-center gap-2 text-muted-foreground">
                   <Mail className="w-4 h-4" /> {qt.supplier.email}
                 </div>
-              )}
-              {qt.supplier.phone && (
+              ) : null}
+              {qt.client?.phone ? (
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <Phone className="w-4 h-4" /> {qt.client.phone}
+                </div>
+              ) : qt.supplier?.phone ? (
                 <div className="flex items-center gap-2 text-muted-foreground">
                   <Phone className="w-4 h-4" /> {qt.supplier.phone}
                 </div>
-              )}
-              {qt.supplier.address && (
+              ) : null}
+              {qt.client?.address ? (
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <MapPin className="w-4 h-4" /> {qt.client.address}
+                </div>
+              ) : qt.supplier?.address ? (
                 <div className="flex items-center gap-2 text-muted-foreground">
                   <MapPin className="w-4 h-4" /> {qt.supplier.address}
                 </div>
-              )}
+              ) : null}
             </div>
           </div>
 

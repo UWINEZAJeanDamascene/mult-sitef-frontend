@@ -92,6 +92,7 @@ export function Quotations() {
     onSuccess: () => {
       toast.success("Quotation sent to supplier");
       queryClient.invalidateQueries({ queryKey: ["quotations"] });
+      queryClient.invalidateQueries({ queryKey: ["client-quotations"] });
     },
     onError: () => toast.error("Failed to send quotation"),
   });
@@ -287,9 +288,9 @@ export function Quotations() {
                       </td>
                       <td className="px-4 py-3">
                         <div className="font-medium text-foreground">
-                          {qt.supplier.name}
+                          {qt.supplier?.name || "-"}
                         </div>
-                        {qt.supplier.contactPerson && (
+                        {qt.supplier?.contactPerson && (
                           <div className="text-xs text-muted-foreground">
                             {qt.supplier.contactPerson}
                           </div>

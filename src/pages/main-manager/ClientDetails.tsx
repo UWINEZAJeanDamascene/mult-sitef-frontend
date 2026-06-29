@@ -17,10 +17,10 @@ import {
   User,
   XCircle,
 } from "lucide-react";
-import { clientApi } from "@/api/mainManager";
+import { clientApi, quotationApi } from "@/api/mainManager";
 import { cn, format } from "@/lib/utils";
 import toast from "react-hot-toast";
-import type { Client, CreateClientDto } from "@/types";
+import type { Client, CreateClientDto, Quotation } from "@/types";
 
 interface EditFormProps {
   client: Client;
@@ -193,12 +193,22 @@ export function ClientDetails() {
     enabled: !!id,
   });
 
+  const {
+    data: clientQuotations,
+    isLoading: quotationsLoading,
+  } = useQuery({
+    queryKey: ["client-quotations", id],
+    queryFn: () => quotationApi.getAll({ clientId: id! }),
+    enabled: !!id,
+  });
+
   const updateMutation = useMutation({
     mutationFn: (data: CreateClientDto) => clientApi.update(id!, data),
     onSuccess: () => {
       toast.success("Client updated successfully");
       queryClient.invalidateQueries({ queryKey: ["client", id] });
       queryClient.invalidateQueries({ queryKey: ["clients"] });
+      queryClient.invalidateQueries({ queryKey: ["client-quotations", id] });
       setIsEditing(false);
     },
     onError: (error: any) => {
@@ -211,6 +221,7 @@ export function ClientDetails() {
     onSuccess: () => {
       toast.success("Client deleted successfully");
       queryClient.invalidateQueries({ queryKey: ["clients"] });
+      queryClient.invalidateQueries({ queryKey: ["client-quotations", id] });
       navigate("/clients");
     },
     onError: (error: any) => {
@@ -450,12 +461,19 @@ export function ClientDetails() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="bg-card rounded-xl border border-border p-4 shadow-sm">
               <p className="text-sm text-muted-foreground">Open Documents</p>
-              <p className="text-2xl font-bold text-foreground mt-1">0</p>
+              <p className="text-2xl font-bold text-foreground mt-1">
+                {clientQuotations?.total ?? 0}
+              </p>
             </div>
             <div className="bg-card rounded-xl border border-border p-4 shadow-sm">
               <p className="text-sm text-muted-foreground">Total Value</p>
               <p className="text-2xl font-bold text-primary mt-1">
-                {format.currency(0)}
+                {format.currency(
+                  clientQuotations?.records.reduce(
+                    (sum, quotation: Quotation) => sum + quotation.totalAmount,
+                    0,
+                  ) ?? 0,
+                )}
               </p>
             </div>
             <div className="bg-card rounded-xl border border-border p-4 shadow-sm">
@@ -473,15 +491,60 @@ export function ClientDetails() {
                 Client Documents
               </h2>
             </div>
-            <div className="px-6 py-10 text-center">
-              <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
-              <h3 className="text-lg font-medium text-foreground">
-                No client documents yet
-              </h3>
-              <p className="text-muted-foreground mt-1">
-                Sales documents can connect here when that workflow is added.
-              </p>
-            </div>
+            {quotationsLoading ? (
+              <div className="px-6 py-10 text-center">
+                <Loader2 className="w-12 h-12 text-primary mx-auto mb-3 animate-spin" />
+                <p className="text-muted-foreground mt-1">Loading quotations...</p>
+              </div>
+            ) : clientQuotations?.records.length ? (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left">
+                  <thead className="bg-muted">
+                    <tr>
+                      <th className="px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                        QT #
+                      </th>
+                      <th className="px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                        Status
+                      </th>
+                      <th className="px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                        Total
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {clientQuotations.records.slice(0, 5).map((quotation) => (
+                      <tr key={quotation.id} className="hover:bg-muted/50">
+                        <td className="px-4 py-3">
+                          <button
+                            onClick={() => navigate(`/quotations/${quotation.id}`)}
+                            className="font-mono text-sm font-medium text-primary hover:underline"
+                          >
+                            {quotation.qtNumber}
+                          </button>
+                        </td>
+                        <td className="px-4 py-3 text-sm text-muted-foreground">
+                          {quotation.status}
+                        </td>
+                        <td className="px-4 py-3 text-sm font-medium text-foreground">
+                          {format.currency(quotation.totalAmount)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className="px-6 py-10 text-center">
+                <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
+                <h3 className="text-lg font-medium text-foreground">
+                  No client documents yet
+                </h3>
+                <p className="text-muted-foreground mt-1">
+                  Sales documents can connect here when that workflow is added.
+                </p>
+              </div>
+            )}
           </div>
 
           {client.notes && (
