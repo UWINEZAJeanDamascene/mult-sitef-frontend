@@ -143,17 +143,20 @@ export function QuotationDetails() {
     onError: () => toast.error("Failed to delete quotation"),
   });
 
-  const openQuotationPdfWindow = (download = false) => async () => {
+  const openQuotationPdfWindow = async (download = false) => {
     if (!id) {
       toast.error("Quotation ID is missing");
       return;
     }
 
-    const printWindow = window.open("", "_blank", "noopener,noreferrer");
+    const printWindow = window.open("about:blank", "_blank");
     if (!printWindow) {
       toast.error("Popup blocked. Allow popups and try again.");
       return;
     }
+
+    printWindow.document.write('<p style="font-family: system-ui, sans-serif; padding: 20px;">Loading quotation PDF...</p>');
+    printWindow.document.close();
 
     try {
       const blob = await quotationApi.exportToPDF(id, download);
@@ -238,7 +241,7 @@ export function QuotationDetails() {
         {/* Action buttons */}
         <div className="flex flex-wrap items-center gap-2">
           <button
-            onClick={openQuotationPdfWindow()}
+            onClick={() => openQuotationPdfWindow()}
             disabled={isAnyPending}
             className="flex items-center gap-1.5 px-3 py-2 border border-border rounded-lg text-sm hover:bg-muted transition-colors text-foreground disabled:opacity-50"
           >
@@ -246,7 +249,7 @@ export function QuotationDetails() {
             Print
           </button>
           <button
-            onClick={openQuotationPdfWindow(true)}
+            onClick={() => openQuotationPdfWindow(true)}
             disabled={isAnyPending}
             className="flex items-center gap-1.5 px-3 py-2 border border-border rounded-lg text-sm hover:bg-muted transition-colors text-foreground disabled:opacity-50"
           >
