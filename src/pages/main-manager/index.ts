@@ -25,3 +25,5 @@ export { CreatePurchaseReturn } from "./CreatePurchaseReturn";
 export { Quotations } from "./Quotations";
 export { QuotationForm } from "./QuotationForm";
 export { QuotationDetails } from "./QuotationDetails";
+export { Invoices } from "./Invoices";
+export { InvoiceDetails } from "./InvoiceDetails";

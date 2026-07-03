@@ -113,14 +113,14 @@ export function QuotationDetails() {
   });
 
   const convertMutation = useMutation({
-    mutationFn: () => quotationApi.convertToPO(id!),
+    mutationFn: () => quotationApi.convertToInvoice(id!),
     onSuccess: (data) => {
-      toast.success(`Converted to PO ${data.convertedToPO.poNumber}`);
+      toast.success(`Converted to invoice ${data.convertedToInvoice.invoiceNumber}`);
       invalidate();
-      navigate(`/purchase-orders/${data.convertedToPO.id}`);
+      navigate(`/invoices/${data.convertedToInvoice.id}`);
     },
     onError: (err: any) =>
-      toast.error(err?.response?.data?.error || "Failed to convert to PO"),
+      toast.error(err?.response?.data?.error || "Failed to convert to invoice"),
   });
 
   const duplicateMutation = useMutation({
@@ -336,10 +336,10 @@ export function QuotationDetails() {
           )}
 
           {/* Accepted actions */}
-          {qt.status === "accepted" && !qt.convertedToPO && (
+          {qt.status === "accepted" && !qt.convertedToInvoice && (
             <button
               onClick={() => {
-                if (confirm("Convert this quotation to a Purchase Order?"))
+                if (confirm("Convert this quotation to an invoice?"))
                   convertMutation.mutate();
               }}
               disabled={isAnyPending}
@@ -350,17 +350,17 @@ export function QuotationDetails() {
               ) : (
                 <ArrowRightLeft className="w-4 h-4" />
               )}
-              Convert to PO
+              Convert to Invoice
             </button>
           )}
 
-          {/* Converted PO link */}
-          {qt.convertedToPO && (
+          {/* Converted invoice link */}
+          {qt.convertedToInvoice && (
             <Link
-              to={`/purchase-orders/${qt.convertedToPO}`}
+              to={`/invoices/${qt.convertedToInvoice}`}
               className="flex items-center gap-1.5 px-3 py-2 bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400 rounded-lg text-sm font-medium hover:opacity-80 transition-opacity"
             >
-              <ExternalLink className="w-4 h-4" /> View PO
+              <ExternalLink className="w-4 h-4" /> View Invoice
             </Link>
           )}
 
@@ -383,20 +383,20 @@ export function QuotationDetails() {
         </div>
       </div>
 
-      {/* Converted PO banner */}
-      {qt.convertedToPO && (
+      {/* Converted invoice banner */}
+      {qt.convertedToInvoice && (
         <div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-xl p-4 flex items-center justify-between">
           <div className="flex items-center gap-2 text-purple-700 dark:text-purple-400">
             <CheckCircle2 className="w-5 h-5" />
             <span className="font-medium text-sm">
-              This quotation has been converted to a Purchase Order.
+              This quotation has been converted to an invoice.
             </span>
           </div>
           <Link
-            to={`/purchase-orders/${qt.convertedToPO}`}
+            to={`/invoices/${qt.convertedToInvoice}`}
             className="flex items-center gap-1 text-sm font-medium text-purple-700 dark:text-purple-400 hover:underline"
           >
-            View PO <ExternalLink className="w-3.5 h-3.5" />
+            View Invoice <ExternalLink className="w-3.5 h-3.5" />
           </Link>
         </div>
       )}
@@ -616,3 +616,4 @@ export function QuotationDetails() {
     </div>
   );
 }
+

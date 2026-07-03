@@ -47,6 +47,8 @@ import {
   Quotations,
   QuotationForm,
   QuotationDetails,
+  Invoices,
+  InvoiceDetails,
 } from "@/pages/main-manager";
 
 // Role-based dashboard redirect
@@ -351,6 +353,22 @@ function App() {
             }
           />
           <Route
+            path="/invoices"
+            element={
+              <ProtectedRoute requiredRole={UserRole.MAIN_MANAGER}>
+                <Invoices />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/invoices/:id"
+            element={
+              <ProtectedRoute requiredRole={UserRole.MAIN_MANAGER}>
+                <InvoiceDetails />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/quotations"
             element={
               <ProtectedRoute requiredRole={UserRole.MAIN_MANAGER}>
@@ -389,3 +407,4 @@ function App() {
 }
 
 export default App;
+

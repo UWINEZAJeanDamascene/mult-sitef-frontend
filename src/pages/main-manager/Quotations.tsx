@@ -125,11 +125,11 @@ export function Quotations() {
   });
 
   const convertMutation = useMutation({
-    mutationFn: quotationApi.convertToPO,
+    mutationFn: quotationApi.convertToInvoice,
     onSuccess: (data) => {
-      toast.success(`Converted to PO ${data.convertedToPO.poNumber}`);
+      toast.success(`Converted to invoice ${data.convertedToInvoice.invoiceNumber}`);
       queryClient.invalidateQueries({ queryKey: ["quotations"] });
-      navigate(`/purchase-orders/${data.convertedToPO.id}`);
+      navigate(`/invoices/${data.convertedToInvoice.id}`);
     },
     onError: (err: any) =>
       toast.error(err?.response?.data?.error || "Failed to convert"),
@@ -167,7 +167,7 @@ export function Quotations() {
         <div>
           <h1 className="text-2xl font-bold text-foreground">Quotations</h1>
           <p className="text-muted-foreground mt-1">
-            Manage supplier quotations before raising purchase orders
+            Manage client quotations before creating invoices
           </p>
         </div>
         <button
@@ -386,18 +386,18 @@ export function Quotations() {
                               <Ban className="w-4 h-4" />
                             </button>
                           )}
-                          {/* Convert to PO (accepted, not yet converted) */}
-                          {qt.status === "accepted" && !qt.convertedToPO && (
+                          {/* Convert to invoice (accepted, not yet converted) */}
+                          {qt.status === "accepted" && !qt.convertedToInvoice && (
                             <button
                               onClick={() => {
                                 if (
                                   confirm(
-                                    "Convert this quotation to a Purchase Order?",
+                                    "Convert this quotation to an invoice?",
                                   )
                                 )
                                   convertMutation.mutate(qt.id);
                               }}
-                              title="Convert to PO"
+                              title="Convert to Invoice"
                               className="p-1.5 rounded text-muted-foreground hover:text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors"
                             >
                               <ArrowRightLeft className="w-4 h-4" />
@@ -465,3 +465,5 @@ export function Quotations() {
     </div>
   );
 }
+
+

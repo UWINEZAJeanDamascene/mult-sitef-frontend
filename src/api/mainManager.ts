@@ -19,6 +19,8 @@ import type {
   CreateDeliveryNoteDto,
   PurchaseReturn,
   CreatePurchaseReturnDto,
+  Invoice,
+  CreateInvoiceDto,
 } from "@/types";
 
 // Dashboard API
@@ -677,6 +679,76 @@ export const purchaseReturnApi = {
   },
 };
 
+// Invoice API
+export const invoiceApi = {
+  getAll: async (params?: {
+    page?: number;
+    limit?: number;
+    status?: string;
+    client?: string;
+    clientId?: string;
+    siteId?: string;
+    startDate?: string;
+    endDate?: string;
+  }): Promise<{
+    records: Invoice[];
+    total: number;
+    page: number;
+    totalPages: number;
+  }> => {
+    const qs = new URLSearchParams();
+    if (params?.page) qs.append("page", params.page.toString());
+    if (params?.limit) qs.append("limit", params.limit.toString());
+    if (params?.status && params.status !== "all") qs.append("status", params.status);
+    if (params?.client) qs.append("client", params.client);
+    if (params?.clientId) qs.append("clientId", params.clientId);
+    if (params?.siteId) qs.append("siteId", params.siteId);
+    if (params?.startDate) qs.append("startDate", params.startDate);
+    if (params?.endDate) qs.append("endDate", params.endDate);
+    const { data } = await api.get(`/invoices?${qs.toString()}`);
+    return data;
+  },
+
+  getById: async (id: string): Promise<Invoice> => {
+    const { data } = await api.get(`/invoices/${id}`);
+    return data;
+  },
+
+  create: async (dto: CreateInvoiceDto): Promise<Invoice> => {
+    const { data } = await api.post("/invoices", dto);
+    return data;
+  },
+
+  send: async (id: string): Promise<Invoice> => {
+    const { data } = await api.patch(`/invoices/${id}/send`);
+    return data;
+  },
+
+  markPaid: async (id: string, amountPaid?: number): Promise<Invoice> => {
+    const { data } = await api.patch(`/invoices/${id}/pay`, amountPaid === undefined ? {} : { amountPaid });
+    return data;
+  },
+
+  cancel: async (id: string): Promise<Invoice> => {
+    const { data } = await api.patch(`/invoices/${id}/cancel`);
+    return data;
+  },
+
+  exportToPDF: async (id: string): Promise<Blob> => {
+    const { data } = await api.get(`/invoices/${id}/pdf`, { responseType: "blob" });
+    return data;
+  },
+
+  getStats: async (): Promise<{
+    total: number;
+    byStatus: Record<string, { count: number; value: number; balanceDue: number }>;
+    totalValue: number;
+    outstandingValue: number;
+  }> => {
+    const { data } = await api.get("/invoices/stats/overview");
+    return data;
+  },
+};
 // Quotation API
 export const quotationApi = {
   getAll: async (params?: {
@@ -754,12 +826,12 @@ export const quotationApi = {
     return data;
   },
 
-  convertToPO: async (
+  convertToInvoice: async (
     id: string,
   ): Promise<{
     id: string;
     qtNumber: string;
-    convertedToPO: { id: string; poNumber: string };
+    convertedToInvoice: { id: string; invoiceNumber: string };
   }> => {
     const { data } = await api.post(`/quotations/${id}/convert`);
     return data;
@@ -775,3 +847,4 @@ export const quotationApi = {
     return data;
   },
 };
+

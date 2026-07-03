@@ -16,6 +16,7 @@ import {
   Warehouse,
   Truck,
   Receipt,
+  ScrollText,
   ClipboardList,
   Contact,
 } from "lucide-react";
@@ -44,6 +45,7 @@ const mainManagerNavItems = [
   { path: "/main-stock", label: "Main Stock Records", icon: Box },
   { path: "/purchase-orders", label: "Purchase Orders", icon: FileText },
   { path: "/quotations", label: "Quotations", icon: ClipboardList },
+  { path: "/invoices", label: "Invoices", icon: ScrollText },
   { path: "/suppliers", label: "Suppliers", icon: Truck },
   { path: "/clients", label: "Clients", icon: Contact },
   { path: "/delivery-notes", label: "Delivery Notes", icon: Package },

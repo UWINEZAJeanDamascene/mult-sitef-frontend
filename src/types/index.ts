@@ -439,6 +439,74 @@ export interface ReceiveItemsDto {
   notes?: string;
 }
 
+// Invoice Types
+export interface InvoiceItem {
+  _id?: string;
+  materialName: string;
+  material_id?: string;
+  description?: string;
+  quantity: number;
+  unitPrice: number;
+  totalPrice: number;
+  unit: string;
+  notes?: string;
+}
+
+export interface Invoice {
+  id: string;
+  invoiceNumber: string;
+  quotation_id?: string;
+  qtNumber?: string;
+  client_id?: string;
+  client: {
+    name: string;
+    contactPerson?: string;
+    email?: string;
+    phone?: string;
+    address?: string;
+    taxId?: string;
+  };
+  site?: {
+    _id: string;
+    name: string;
+    location?: string;
+  } | null;
+  status: "draft" | "sent" | "paid" | "overdue" | "cancelled";
+  items: InvoiceItem[];
+  subTotal: number;
+  taxRate: number;
+  taxAmount: number;
+  totalAmount: number;
+  amountPaid: number;
+  balanceDue: number;
+  issueDate: string;
+  dueDate?: string | null;
+  notes?: string;
+  terms?: string;
+  sentDate?: string | null;
+  paidDate?: string | null;
+  createdBy?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateInvoiceDto {
+  client_id: string;
+  site_id?: string;
+  items: {
+    materialName: string;
+    material_id?: string;
+    description?: string;
+    quantity: number;
+    unitPrice: number;
+    unit: string;
+    notes?: string;
+  }[];
+  taxRate?: number;
+  dueDate?: string;
+  notes?: string;
+  terms?: string;
+}
 // Quotation Types
 export interface QuotationItem {
   _id?: string;
@@ -489,6 +557,7 @@ export interface Quotation {
   terms?: string;
   sentDate?: string | null;
   convertedToPO?: string | null;
+  convertedToInvoice?: string | null;
   createdBy?: string;
   createdAt: string;
   updatedAt: string;
@@ -518,3 +587,4 @@ export interface CreateQuotationDto {
   notes?: string;
   terms?: string;
 }
+
