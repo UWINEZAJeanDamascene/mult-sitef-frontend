@@ -4,7 +4,13 @@ import type { JwtPayload } from '@/types'
 
 const API_URL =
   import.meta.env.VITE_API_URL ||
-  (import.meta.env.MODE === 'development' ? '/api' : '/api')
+  (import.meta.env.MODE === 'development' ? '/api' : '')
+
+if (!API_URL && import.meta.env.MODE !== 'development') {
+  console.error(
+    '[axios] Missing VITE_API_URL in production. API requests will default to same-origin / and may return 404.'
+  )
+}
 
 // Note: authentication is cookie-based (httpOnly cookie set by backend)
 // In production, set VITE_API_URL to your backend base URL in Vercel environment vars.

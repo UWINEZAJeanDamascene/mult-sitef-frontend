@@ -95,8 +95,11 @@ export default function CompanyProfile() {
       setIsUploadingImage(false);
     },
     onError: (error) => {
+      const anyErr = error as any
+      const requestUrl = anyErr?.response?.config?.url
+      const status = anyErr?.response?.status
       toast.error('Failed to upload signature image');
-      console.error('[CompanyProfile] upload signature error:', error);
+      console.error('[CompanyProfile] upload signature error:', { error, requestUrl, status });
       setIsUploadingImage(false);
     },
   });
@@ -113,8 +116,11 @@ export default function CompanyProfile() {
       setIsUploadingImage(false);
     },
     onError: (error) => {
+      const anyErr = error as any
+      const requestUrl = anyErr?.response?.config?.url
+      const status = anyErr?.response?.status
       toast.error('Failed to upload stamp image');
-      console.error('[CompanyProfile] upload stamp error:', error);
+      console.error('[CompanyProfile] upload stamp error:', { error, requestUrl, status });
       setIsUploadingImage(false);
     },
   });
