@@ -9,6 +9,6 @@
     }
   ],
   "env": {
-    "VITE_API_URL": "https://mult-site-stock.onrender.com"
+    "VITE_API_URL": "https://mult-site-stock.onrender.com/api"
   }
 }
