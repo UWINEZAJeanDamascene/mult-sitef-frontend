@@ -26,6 +26,9 @@ export interface User {
     id: string;
     name: string;
     logo?: string;
+    signatureImage?: string;
+    stampImage?: string;
+    footerImage?: string;
     address?: string;
     phone?: string;
     email?: string;

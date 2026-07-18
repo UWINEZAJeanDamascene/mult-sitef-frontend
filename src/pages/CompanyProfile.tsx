@@ -38,7 +38,7 @@ export default function CompanyProfile() {
     industry: '',
     description: '',
   });
-  const [selectedUploadType, setSelectedUploadType] = useState<'logo' | 'signature' | 'stamp'>('logo');
+  const [selectedUploadType, setSelectedUploadType] = useState<'logo' | 'signature' | 'stamp' | 'footer'>('logo');
   const [isUploadingImage, setIsUploadingImage] = useState(false);
 
   // Mutation for updating company profile
@@ -129,6 +129,24 @@ export default function CompanyProfile() {
     },
   });
 
+  const uploadFooterMutation = useMutation({
+    mutationFn: async (image: string) => {
+      const companyId = getCompanyId();
+      if (!companyId) throw new Error('Company ID not found');
+      return companiesApi.uploadFooter(companyId, image);
+    },
+    onSuccess: (result) => {
+      updateCompany({ footerImage: result.footerImage });
+      toast.success('Footer image updated successfully');
+      setIsUploadingImage(false);
+    },
+    onError: (error) => {
+      toast.error('Failed to upload footer image');
+      console.error('[CompanyProfile] upload footer error:', error);
+      setIsUploadingImage(false);
+    },
+  });
+
   const deleteLogoMutation = useMutation({
     mutationFn: async () => {
       const companyId = getCompanyId();
@@ -183,17 +201,37 @@ export default function CompanyProfile() {
     },
   });
 
-  const handleDeleteImage = useCallback((type: 'logo' | 'signature' | 'stamp') => {
+  const deleteFooterMutation = useMutation({
+    mutationFn: async () => {
+      const companyId = getCompanyId();
+      if (!companyId) throw new Error('Company ID not found');
+      return companiesApi.deleteFooter(companyId);
+    },
+    onSuccess: () => {
+      updateCompany({ footerImage: undefined });
+      toast.success('Footer image deleted successfully');
+      setIsUploadingImage(false);
+    },
+    onError: (error) => {
+      toast.error('Failed to delete footer image');
+      console.error('[CompanyProfile] delete footer error:', error);
+      setIsUploadingImage(false);
+    },
+  });
+
+  const handleDeleteImage = useCallback((type: 'logo' | 'signature' | 'stamp' | 'footer') => {
     if (isUploadingImage) return;
     setIsUploadingImage(true);
     if (type === 'logo') {
       deleteLogoMutation.mutate();
     } else if (type === 'signature') {
       deleteSignatureMutation.mutate();
-    } else {
+    } else if (type === 'stamp') {
       deleteStampMutation.mutate();
+    } else {
+      deleteFooterMutation.mutate();
     }
-  }, [deleteLogoMutation, deleteSignatureMutation, deleteStampMutation, isUploadingImage]);
+  }, [deleteLogoMutation, deleteSignatureMutation, deleteStampMutation, deleteFooterMutation, isUploadingImage]);
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -235,18 +273,20 @@ export default function CompanyProfile() {
         uploadLogoMutation.mutate(base64Image);
       } else if (selectedUploadType === 'signature') {
         uploadSignatureMutation.mutate(base64Image);
-      } else {
+      } else if (selectedUploadType === 'stamp') {
         uploadStampMutation.mutate(base64Image);
+      } else {
+        uploadFooterMutation.mutate(base64Image);
       }
     };
     reader.readAsDataURL(file);
-  }, [selectedUploadType, uploadLogoMutation, uploadSignatureMutation, uploadStampMutation]);
+  }, [selectedUploadType, uploadLogoMutation, uploadSignatureMutation, uploadStampMutation, uploadFooterMutation]);
 
   const handleSave = useCallback(() => {
     updateCompanyMutation.mutate(formData);
   }, [formData, updateCompanyMutation]);
 
-  const openFileDialog = useCallback((type: 'logo' | 'signature' | 'stamp') => {
+  const openFileDialog = useCallback((type: 'logo' | 'signature' | 'stamp' | 'footer') => {
     if (isUploadingImage) return;
     setSelectedUploadType(type);
     if (fileInputRef.current) {
@@ -421,6 +461,47 @@ export default function CompanyProfile() {
                     disabled={isUploadingImage}
                   >
                     Delete Stamp
+                  </Button>
+                )}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Footer Image Card */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Quotation Footer Image</CardTitle>
+            <CardDescription>Attach a dedicated quotation footer banner</CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-col items-center gap-4">
+            <div className="w-full h-32 rounded-lg bg-primary/10 flex items-center justify-center overflow-hidden">
+              {company?.footerImage ? (
+                <img
+                  src={company.footerImage || ''}
+                  alt="Quotation Footer Image"
+                  className="w-full h-full object-contain"
+                />
+              ) : (
+                <span className="text-sm text-muted-foreground">No footer image uploaded</span>
+              )}
+            </div>
+            {canEdit && isEditing && (
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  variant="secondary"
+                  onClick={() => openFileDialog('footer')}
+                  disabled={isUploadingImage}
+                >
+                  Upload Footer Image
+                </Button>
+                {company?.footerImage && (
+                  <Button
+                    variant="outline"
+                    onClick={() => handleDeleteImage('footer')}
+                    disabled={isUploadingImage}
+                  >
+                    Delete Footer Image
                   </Button>
                 )}
               </div>

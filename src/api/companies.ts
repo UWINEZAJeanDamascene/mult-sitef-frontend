@@ -7,6 +7,7 @@ export interface Company {
   logo?: string;
   signatureImage?: string;
   stampImage?: string;
+  footerImage?: string;
   address?: string;
   phone?: string;
   email?: string;
@@ -30,6 +31,7 @@ export interface UpdateCompanyData {
   logo?: string;
   signatureImage?: string;
   stampImage?: string;
+  footerImage?: string;
 }
 
 export const companiesApi = {
@@ -63,6 +65,12 @@ export const companiesApi = {
     return response.data;
   },
 
+  // Upload company footer image
+  uploadFooter: async (id: string, image: string): Promise<{ footerImage: string }> => {
+    const response = await api.post(`/companies/${id}/footer`, { image });
+    return response.data;
+  },
+
   // Delete company logo
   deleteLogo: async (id: string): Promise<{ logo: null }> => {
     const response = await api.delete(`/companies/${id}/logo`);
@@ -78,6 +86,12 @@ export const companiesApi = {
   // Delete company stamp
   deleteStamp: async (id: string): Promise<{ stampImage: null }> => {
     const response = await api.delete(`/companies/${id}/stamp`);
+    return response.data;
+  },
+
+  // Delete company footer image
+  deleteFooter: async (id: string): Promise<{ footerImage: null }> => {
+    const response = await api.delete(`/companies/${id}/footer`);
     return response.data;
   },
 };
