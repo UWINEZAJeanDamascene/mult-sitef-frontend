@@ -73,7 +73,7 @@ export function Quotations() {
       quotationApi.getAll({
         page,
         limit: ITEMS_PER_PAGE,
-        supplier: searchQuery || undefined,
+        client: searchQuery || undefined,
         status: statusFilter !== "all" ? statusFilter : undefined,
       }),
   });
@@ -191,7 +191,7 @@ export function Quotations() {
                 setSearchQuery(e.target.value);
                 setPage(1);
               }}
-              placeholder="Search by supplier..."
+              placeholder="Search by client..."
               className="w-full pl-10 pr-4 py-2 border border-input rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
@@ -235,7 +235,7 @@ export function Quotations() {
                   QT #
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                  Supplier
+                  Client
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                   Site
@@ -288,11 +288,11 @@ export function Quotations() {
                       </td>
                       <td className="px-4 py-3">
                         <div className="font-medium text-foreground">
-                          {qt.supplier?.name || "-"}
+                          {qt.client?.name || "-"}
                         </div>
-                        {qt.supplier?.contactPerson && (
+                        {qt.client?.contactPerson && (
                           <div className="text-xs text-muted-foreground">
-                            {qt.supplier.contactPerson}
+                            {qt.client.contactPerson}
                           </div>
                         )}
                       </td>
